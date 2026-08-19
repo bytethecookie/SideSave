@@ -3,6 +3,7 @@ package presets
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -87,5 +88,86 @@ func TestScan_ExcludesRealSteamGamesIncludesShortcuts(t *testing.T) {
 	}
 	if vendorLeak {
 		t.Error("Wine/Windows vendor junk inside a shortcut's prefix must still be filtered out")
+	}
+}
+
+// TestScan_UnrealSavedFolderOffersOnlySaveGames pins the fix for tracking
+// device-specific settings and crash reports as if they were save data.
+// A game that follows Unreal's own <GameFolder>/Saved/{SaveGames,Config,
+// Logs} convention must only offer SaveGames — Config holds
+// GameUserSettings.ini (resolution/graphics), which has no business
+// following a save between a Steam Deck and a 4K HDR desktop, and Logs is
+// just log files. The engine-wide AppData/Local/UnrealEngine folder (not
+// nested under any one game) must be excluded entirely too — it's the
+// crash reporter's own cache, shared across every UE game in the prefix.
+func TestScan_UnrealSavedFolderOffersOnlySaveGames(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	home := t.TempDir()
+	lib := filepath.Join(home, ".local", "share", "Steam")
+
+	prefix := filepath.Join(lib, "steamapps", "compatdata", "2194695776", "pfx", "drive_c", "users", "steamuser")
+
+	// The real save data — must be offered.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "SB", "Saved", "SaveGames", "76561197960285355", "StellarBladeSave00.sav"))
+	// Device-specific settings — must NOT be offered.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "SB", "Saved", "Config", "WindowsNoEditor", "GameUserSettings.ini"))
+	// Crash reports and logs — must NOT be offered.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "SB", "Saved", "Config", "CrashReportClient", "CrashReportClient.ini"))
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "SB", "Saved", "Logs", "SB.log"))
+	// A flat (non-Unreal) save folder alongside it — must still be offered
+	// as before, unaffected by the Saved/ drill-down logic.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Roaming", "GSE Saves", "3489700", "playtime.txt"))
+	// The engine-wide crash-reporter cache, a peer of SB (not nested under
+	// it) — must be excluded entirely.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "UnrealEngine", "4.26", "Saved", "Something.log"))
+
+	raw := fakeShortcutsVDF(t, map[string]struct {
+		appID int32
+		name  string
+	}{"0": {appID: -2100271520, name: "Stellar Blade"}}) // -2100271520 as int32 is 2194695776 unsigned
+	userdata := filepath.Join(lib, "userdata")
+	mkfile(t, filepath.Join(userdata, "190002642", "config", "shortcuts.vdf"), string(raw))
+
+	sc := &Scanner{GOOS: "linux", HomeDir: home, SteamRoots: []string{lib}}
+	got := sc.Scan(nil)
+
+	var saveGamesFound, gseFound, configLeak, logsLeak, crashLeak, engineLeak bool
+	for _, d := range got {
+		switch {
+		case strings.Contains(d.SavePath, filepath.Join("SB", "Saved", "SaveGames")):
+			saveGamesFound = true
+			if d.Name != "Stellar Blade (SB)" {
+				t.Errorf("SaveGames entry Name = %q, want %q", d.Name, "Stellar Blade (SB)")
+			}
+		case strings.Contains(d.SavePath, "GSE Saves"):
+			gseFound = true
+		case strings.Contains(d.SavePath, filepath.Join("Saved", "Config")):
+			configLeak = true
+		case strings.Contains(d.SavePath, filepath.Join("Saved", "Logs")):
+			logsLeak = true
+		case strings.Contains(d.SavePath, "CrashReportClient"):
+			crashLeak = true
+		case strings.Contains(d.SavePath, "UnrealEngine"):
+			engineLeak = true
+		}
+	}
+	if !saveGamesFound {
+		t.Error("Saved/SaveGames must be offered — it's the actual save data")
+	}
+	if !gseFound {
+		t.Error("a flat (non-Unreal) save folder alongside it must still be offered")
+	}
+	if configLeak {
+		t.Error("Saved/Config must never be offered — it holds device-specific settings, not save data")
+	}
+	if logsLeak {
+		t.Error("Saved/Logs must never be offered — it's just log files")
+	}
+	if crashLeak {
+		t.Error("CrashReportClient must never be offered")
+	}
+	if engineLeak {
+		t.Error("the engine-wide AppData/Local/UnrealEngine folder must never be offered — it's not per-game save data")
 	}
 }

@@ -38,6 +38,21 @@ var protonVendorSkip = map[string]bool{
 	"criware": true, "unity": true, "unitycrashhandler": true,
 	"easyanticheat": true, "battleye": true, "steam": true, "valve": true,
 	"epicgameslauncher": true, "goginstaller": true,
+	// AppData/Local/UnrealEngine (note: NOT <game>/Saved, which is handled
+	// separately below) is the engine's own crash-reporter/analytics cache,
+	// shared across every UE game in the prefix — never one game's save.
+	"unrealengine": true,
+}
+
+// nonSaveUnrealSubdirs are the subfolders inside a UE game's own Saved/
+// directory that hold device-specific settings, crash dumps, and logs —
+// never save progress. Config in particular is why syncing a UE game's
+// whole top-level folder was wrong: GameUserSettings.ini and Engine.ini
+// in there carry resolution/graphics settings, which have no business
+// following a save from a Steam Deck to a 4K HDR desktop or back.
+var nonSaveUnrealSubdirs = map[string]bool{
+	"config": true, "logs": true, "crashes": true, "crashreportclient": true,
+	"screenshots": true,
 }
 
 // scanProtonCompat walks every Steam library's compatdata prefixes and
@@ -74,33 +89,61 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, sh
 			steamUser := userHomes[0]
 
 			perGame := 0
+			// offer records one save candidate under the given label (the
+			// name shown after the game — e.g. "SB" or "GSE Saves", always
+			// the top-level folder name a user would recognize, even when
+			// savePath itself points deeper inside it).
+			offer := func(id, label, savePath string) bool {
+				abs, err := filepath.Abs(savePath)
+				if err != nil || seen[abs] || !dirNonEmpty(abs) || seenInside(seen, abs) {
+					return false
+				}
+				seen[abs] = true
+				found = append(found, DiscoveredSave{
+					ID:       id,
+					Name:     fmt.Sprintf("%s (%s)", gameName, label),
+					Type:     "game",
+					SavePath: savePath,
+					AppID:    appID,
+				})
+				perGame++
+				return true
+			}
+
 			for _, root := range protonSaveRoots {
 				rootPath := filepath.Join(steamUser, root)
 				for _, sub := range listSubdirs(rootPath) {
 					if protonVendorSkip[toLowerASCII(sub)] || looksLikeHexHash(sub) {
 						continue
 					}
-					savePath := filepath.Join(rootPath, sub)
-					abs, err := filepath.Abs(savePath)
-					if err != nil || seen[abs] || !dirNonEmpty(abs) {
-						continue
-					}
-					// The Ludusavi pass already found a precise save inside
-					// this folder — the broad parent would be junk on top.
-					if seenInside(seen, abs) {
-						continue
-					}
-					seen[abs] = true
+					subPath := filepath.Join(rootPath, sub)
 
-					found = append(found, DiscoveredSave{
-						ID:       "proton-" + appID + "-" + sanitizeID(root) + "-" + sanitizeID(sub),
-						Name:     fmt.Sprintf("%s (%s)", gameName, sub),
-						Type:     "game",
-						SavePath: savePath,
-						AppID:    appID,
-					})
-					perGame++
-					if perGame >= 12 { // a single prefix shouldn't flood the grid
+					// A game folder that follows Unreal's own Saved/
+					// convention holds its real progress, its device-local
+					// settings (resolution, graphics, key bindings), and
+					// its crash/log junk all under one tree. Tracking the
+					// whole folder synced settings and crash reports right
+					// along with saves — offer only what's actually save
+					// data, one level inside Saved/, instead.
+					savedDir := filepath.Join(subPath, "Saved")
+					if info, err := os.Stat(savedDir); err == nil && info.IsDir() {
+						for _, savedSub := range listSubdirs(savedDir) {
+							if nonSaveUnrealSubdirs[toLowerASCII(savedSub)] || looksLikeHexHash(savedSub) {
+								continue
+							}
+							id := "proton-" + appID + "-" + sanitizeID(root) + "-" + sanitizeID(sub) + "-" + sanitizeID(savedSub)
+							if offer(id, sub, filepath.Join(savedDir, savedSub)) && perGame >= 12 {
+								break
+							}
+						}
+						if perGame >= 12 {
+							break
+						}
+						continue
+					}
+
+					id := "proton-" + appID + "-" + sanitizeID(root) + "-" + sanitizeID(sub)
+					if offer(id, sub, subPath) && perGame >= 12 { // a single prefix shouldn't flood the grid
 						break
 					}
 				}
