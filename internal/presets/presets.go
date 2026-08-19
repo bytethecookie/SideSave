@@ -19,6 +19,14 @@ type DiscoveredSave struct {
 	Type     string `json:"type"` // always "game" — kept for API compatibility
 	SavePath string `json:"savePath"`
 	AppID    string `json:"appId,omitempty"`
+	// GameName is the shortcut's real name on its own — Name has a
+	// "(subfolder)" suffix appended for display when a game has several
+	// save locations (e.g. "Sackboy: A Big Adventure (GingerBread)"), which
+	// makes Name useless for matching against a tracked game's own Name
+	// (which never carries that suffix). Callers that need to compare
+	// against a tracked game — placeholder-relink detection, mainly —
+	// should use this instead of parsing Name.
+	GameName string `json:"gameName,omitempty"`
 }
 
 var idSanitizeRe = regexp.MustCompile(`[^a-z0-9]`)

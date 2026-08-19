@@ -104,6 +104,7 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, sh
 				found = append(found, DiscoveredSave{
 					ID:       id,
 					Name:     fmt.Sprintf("%s (%s)", gameName, label),
+					GameName: gameName,
 					Type:     "game",
 					SavePath: savePath,
 					AppID:    appID,

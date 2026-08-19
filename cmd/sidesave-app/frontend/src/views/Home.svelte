@@ -139,8 +139,16 @@
   // offer to relink instead of letting it silently become a duplicate.
   const normName = (n) => (n ?? '').trim().toLowerCase();
   $: placeholders = $gameList.filter((g) => g.peerPlaceholder);
+  // r.name has a "(subfolder)" suffix appended for display whenever a game
+  // has more than one save location (e.g. "Sackboy: A Big Adventure
+  // (GingerBread)") — comparing that against a tracked game's own name,
+  // which never carries the suffix, would almost never match. r.gameName
+  // is the shortcut's name on its own, exactly what a tracked game's name
+  // would be.
   const placeholderMatch = (r) =>
-    placeholders.find((g) => normName(g.name) === normName(r.name) && normPath(g.savePath) !== normPath(r.savePath));
+    placeholders.find(
+      (g) => normName(g.name) === normName(r.gameName || r.name) && normPath(g.savePath) !== normPath(r.savePath)
+    );
   // Note: reference trackedPaths directly (not via isTracked) so Svelte sees
   // it as a dependency and refreshes the list when tracked-state changes.
   $: filteredResults = (scanResults ?? []).filter((r) => {

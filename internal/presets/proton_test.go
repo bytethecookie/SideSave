@@ -68,6 +68,16 @@ func TestScan_ExcludesRealSteamGamesIncludesShortcuts(t *testing.T) {
 			if d.Name != "Stellar Blade (StellarBladeSave)" {
 				t.Errorf("shortcut save Name = %q, want %q", d.Name, "Stellar Blade (StellarBladeSave)")
 			}
+			// GameName must be the shortcut's name on its own, with no
+			// "(subfolder)" suffix — the frontend's placeholder-relink
+			// detection matches on this against a tracked game's own name,
+			// which never carries that suffix either. This regressed once
+			// already: matching against Name instead meant a scan result
+			// for a game with more than one save location could never
+			// match its own tracked placeholder.
+			if d.GameName != "Stellar Blade" {
+				t.Errorf("shortcut save GameName = %q, want %q (no subfolder suffix)", d.GameName, "Stellar Blade")
+			}
 			if d.AppID != "3464295630" {
 				t.Errorf("shortcut save AppID = %q, want 3464295630", d.AppID)
 			}
