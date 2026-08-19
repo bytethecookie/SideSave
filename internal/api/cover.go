@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/opensave/opensave/internal/presets"
 )
 
 // httpStatusError distinguishes a "the CDN answered, but not 200" failure
@@ -95,9 +97,26 @@ func (s *Server) handleCover(w http.ResponseWriter, r *http.Request) {
 	}
 	portrait := r.URL.Query().Get("portrait") == "1"
 
-	// Serve straight from the disk cache without touching the network.
-	if data, err := os.ReadFile(s.coverCachePath(appID, portrait)); err == nil && len(data) > 0 {
-		writeCover(w, data)
+	// Serve straight from the disk cache without touching the network. jpg
+	// is the common case (everything the CDN ever returns); png only shows
+	// up when a local grid image was cached keeping its original format.
+	for _, ext := range gridArtExts {
+		if data, err := os.ReadFile(s.coverCachePath(appID, portrait, ext)); err == nil && len(data) > 0 {
+			writeCover(w, data, contentTypeForExt(ext))
+			return
+		}
+	}
+
+	// Steam's own grid art for this AppID, if the user configured any in
+	// the client. This is what makes covers work for non-Steam shortcuts at
+	// all: their AppID is a CRC Steam computed locally once, which the
+	// store CDN below has never heard of and always 404s on — but the grid
+	// folder holds exactly the box art the user picked for it in Steam.
+	if data, ext, ok := localGridArt(appID, portrait); ok {
+		path := s.coverCachePath(appID, portrait, ext)
+		_ = os.MkdirAll(filepath.Dir(path), 0o777)
+		_ = os.WriteFile(path, data, 0o666)
+		writeCover(w, data, contentTypeForExt(ext))
 		return
 	}
 
@@ -112,8 +131,8 @@ func (s *Server) handleCover(w http.ResponseWriter, r *http.Request) {
 	defer func() { <-coverFetchSem }()
 
 	// Another request may have fetched it while we waited for a slot.
-	if data, err := os.ReadFile(s.coverCachePath(appID, portrait)); err == nil && len(data) > 0 {
-		writeCover(w, data)
+	if data, err := os.ReadFile(s.coverCachePath(appID, portrait, "jpg")); err == nil && len(data) > 0 {
+		writeCover(w, data, contentTypeForExt("jpg"))
 		return
 	}
 
@@ -135,21 +154,68 @@ func (s *Server) handleCover(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	writeCover(w, data)
+	writeCover(w, data, contentTypeForExt("jpg"))
 }
 
-func writeCover(w http.ResponseWriter, data []byte) {
-	w.Header().Set("Content-Type", "image/jpeg")
+func writeCover(w http.ResponseWriter, data []byte, contentType string) {
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Cache-Control", "public, max-age=604800")
 	_, _ = w.Write(data)
 }
 
-func (s *Server) coverCachePath(appID string, portrait bool) string {
-	name := appID + ".jpg"
+func (s *Server) coverCachePath(appID string, portrait bool, ext string) string {
+	name := appID + "." + ext
 	if portrait {
-		name = appID + "_p.jpg"
+		name = appID + "_p." + ext
 	}
 	return filepath.Join(s.Daemon.Paths.HomeDir, "covers", name)
+}
+
+// gridArtExts are the image formats a local Steam grid image is tried as,
+// jpg first since it's what the CDN and most user uploads use.
+var gridArtExts = []string{"jpg", "png"}
+
+// steamUserdataPathsFn resolves Steam userdata roots; a package var so
+// tests can point it at a fixture directory instead of the real machine's
+// Steam install.
+var steamUserdataPathsFn = presets.SteamUserdataPaths
+
+func contentTypeForExt(ext string) string {
+	if ext == "png" {
+		return "image/png"
+	}
+	return "image/jpeg"
+}
+
+// localGridArt looks for artwork Steam already has on disk for this AppID,
+// under every userdata/<user>/config/grid/ this machine has. Steam names a
+// shortcut's landscape grid image "<appid>.<ext>" and its portrait one
+// "<appid>p.<ext>" — no separator before the p, confirmed against a real
+// grid folder (920x430 and 600x900 respectively, matching the CDN's
+// header.jpg / library_600x900.jpg aspect ratios).
+func localGridArt(appID string, portrait bool) (data []byte, ext string, ok bool) {
+	suffix := ""
+	if portrait {
+		suffix = "p"
+	}
+	for _, root := range steamUserdataPathsFn() {
+		users, err := os.ReadDir(root)
+		if err != nil {
+			continue
+		}
+		for _, u := range users {
+			if !u.IsDir() {
+				continue
+			}
+			for _, e := range gridArtExts {
+				path := filepath.Join(root, u.Name(), "config", "grid", appID+suffix+"."+e)
+				if raw, err := os.ReadFile(path); err == nil && len(raw) > 0 {
+					return raw, e, true
+				}
+			}
+		}
+	}
+	return nil, "", false
 }
 
 // isNumericID guards against SSRF: only all-digit App IDs ever reach the CDN
@@ -187,8 +253,8 @@ func (s *Server) fetchCover(appID string, portrait bool) ([]byte, error) {
 			lastErr = err
 			return nil, false
 		}
-		_ = os.MkdirAll(filepath.Dir(s.coverCachePath(appID, portrait)), 0o777)
-		_ = os.WriteFile(s.coverCachePath(appID, portrait), data, 0o666)
+		_ = os.MkdirAll(filepath.Dir(s.coverCachePath(appID, portrait, "jpg")), 0o777)
+		_ = os.WriteFile(s.coverCachePath(appID, portrait, "jpg"), data, 0o666)
 		return data, true
 	}
 
