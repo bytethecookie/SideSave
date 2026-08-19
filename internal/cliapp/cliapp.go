@@ -181,6 +181,17 @@ func runDaemon(args []string) int {
 	}
 	defer d.Stop()
 
+	// Nothing stopped two `daemon start` invocations from racing for the
+	// same port and database — whichever lost the race silently fell back
+	// to an ephemeral port, leaving peers, the Decky panel, and the
+	// desktop app each potentially talking to a different one. Refuse
+	// outright when a previous CLI-started daemon is still alive.
+	pidPath := daemonPIDPath(d.Paths.HomeDir)
+	if pid, alive := aliveDaemonPID(pidPath); alive {
+		fmt.Fprintf(os.Stderr, "error: a daemon is already running (pid %d) — `sidesave daemon status` to check it, or `sidesave daemon stop` first\n", pid)
+		return 1
+	}
+
 	if port == 0 {
 		settings, err := d.Store.GetSettings()
 		if err != nil {
@@ -208,7 +219,6 @@ func runDaemon(args []string) int {
 	// Record the PID so `sidesave daemon stop` can find *this* daemon. Only
 	// the CLI writes it: the desktop app serves the same API, and stopping it
 	// out from under its window would look like a crash.
-	pidPath := daemonPIDPath(d.Paths.HomeDir)
 	_ = os.WriteFile(pidPath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o666)
 	defer os.Remove(pidPath)
 
@@ -225,6 +235,30 @@ func runDaemon(args []string) int {
 // daemonPIDPath is where a CLI-started daemon records its process id.
 func daemonPIDPath(homeDir string) string {
 	return filepath.Join(homeDir, "daemon.pid")
+}
+
+// aliveDaemonPID reads a daemon.pid file and reports whether the process
+// it names is still running. A pidfile left over from a daemon that
+// didn't exit cleanly (killed, crashed) names a dead PID — that's not
+// "already running", just stale housekeeping runDaemon will overwrite.
+func aliveDaemonPID(pidPath string) (pid int, alive bool) {
+	raw, err := os.ReadFile(pidPath)
+	if err != nil {
+		return 0, false
+	}
+	pid, err = strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil || pid <= 0 {
+		return 0, false
+	}
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return 0, false
+	}
+	// Signal 0 checks liveness without actually sending a signal.
+	if err := proc.Signal(syscall.Signal(0)); err != nil {
+		return 0, false
+	}
+	return pid, true
 }
 
 func cmdUpnp(args []string) int {
