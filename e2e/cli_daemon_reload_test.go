@@ -3,7 +3,7 @@ package e2e
 // The CLI does not talk to a running daemon: every command opens a
 // short-lived daemon of its own and writes the database directly. That is
 // fine for reads, and quietly wrong for anything that changes which games
-// exist — a game added with `opensave add` while the desktop app is running
+// exist — a game added with `sidesave add` while the desktop app is running
 // appeared in the list but was watched by nobody, so it got no auto-snapshots
 // and no auto-sync until the app was restarted, with nothing to say so.
 
@@ -18,7 +18,7 @@ import (
 // waitForLog waits until the daemon's activity log contains a line.
 func waitForLog(t *testing.T, c *cli, want string, within time.Duration) bool {
 	t.Helper()
-	logPath := filepath.Join(c.home, ".opensave", "opensave.log")
+	logPath := filepath.Join(c.home, ".sidesave", "sidesave.log")
 	deadline := time.Now().Add(within)
 	for time.Now().Before(deadline) {
 		if raw, err := os.ReadFile(logPath); err == nil && strings.Contains(string(raw), want) {
@@ -65,7 +65,7 @@ func TestCLIDaemonReload_TurningAutoSyncOffStopsTheWatch(t *testing.T) {
 
 	c.mustRun("game", "off-switch", "set", "auto-sync", "false")
 	if !waitForLog(t, c, "0 started, 1 stopped", 20*time.Second) {
-		raw, _ := os.ReadFile(filepath.Join(c.home, ".opensave", "opensave.log"))
+		raw, _ := os.ReadFile(filepath.Join(c.home, ".sidesave", "sidesave.log"))
 		t.Errorf("turning auto-sync off did not stop the running daemon's watch:\n%s", raw)
 	}
 }
@@ -84,7 +84,7 @@ func TestCLIDaemonReload_RemovingAGameStopsTheWatch(t *testing.T) {
 
 	c.mustRun("remove", "goner", "--yes")
 	if !waitForLog(t, c, "0 started, 1 stopped", 25*time.Second) {
-		raw, _ := os.ReadFile(filepath.Join(c.home, ".opensave", "opensave.log"))
+		raw, _ := os.ReadFile(filepath.Join(c.home, ".sidesave", "sidesave.log"))
 		t.Errorf("removing a game left the running daemon watching it:\n%s", raw)
 	}
 }
@@ -93,7 +93,7 @@ func TestCLIDaemonReload_RemovingAGameStopsTheWatch(t *testing.T) {
 // state before you started playing, and the one most worth having.
 //
 // It runs in the background so the desktop app stays responsive, which left
-// the CLI racing it: `opensave add` returned as soon as the game was
+// the CLI racing it: `sidesave add` returned as soon as the game was
 // recorded, the process exited, and the half-taken snapshot went with it. The
 // game ended up tracked with no history and nothing to say why. Whether it
 // survived came down to how long the command happened to take.

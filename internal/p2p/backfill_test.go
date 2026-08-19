@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // TestBackfillCover_PrefersLocalPathAppIDOverPeers pins the actual bug: a

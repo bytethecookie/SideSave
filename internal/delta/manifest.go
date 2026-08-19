@@ -21,8 +21,8 @@ import (
 // TmpSuffix marks the temp files PatchFile writes before atomically
 // replacing the target. They are never part of the save itself: manifests
 // must exclude them, or an interrupted patch's leftover would sync to the
-// peer as a real file (and cascade into name.opensave.tmp.opensave.tmp).
-const TmpSuffix = ".opensave.tmp"
+// peer as a real file (and cascade into name.sidesave.tmp.sidesave.tmp).
+const TmpSuffix = ".sidesave.tmp"
 
 // staleTmpAge is how old a leftover TmpSuffix file must be before the
 // manifest walk garbage-collects it. Generous enough that a patch actively

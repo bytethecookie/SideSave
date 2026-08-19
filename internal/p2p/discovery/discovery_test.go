@@ -20,7 +20,7 @@ func listener(t *testing.T, self Ping, cb Callbacks) (*Manager, *net.UDPConn, in
 
 	// Ask the OS for a free UDP port, then hand it to the Manager. A fixed
 	// port makes this test fail when anything else on the machine (including
-	// a real OpenSave) is already listening.
+	// a real SideSave) is already listening.
 	probe, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {
 		t.Fatalf("reserve a port: %v", err)
@@ -94,7 +94,7 @@ func TestDiscovery_APingFromAnotherDeviceIsDiscovered(t *testing.T) {
 	m, sender, _ := listener(t, self, Callbacks{OnPeerSeen: rec.record})
 
 	sendPing(t, sender, Ping{
-		Type: "opensave-ping", NodeID: "them",
+		Type: "sidesave-ping", NodeID: "them",
 		DeviceName: "Steam Deck", DeviceType: "deck", Port: 8384,
 	})
 
@@ -138,7 +138,7 @@ func TestDiscovery_ARepeatSightingIsNotReportedAsNew(t *testing.T) {
 	self := Ping{NodeID: "me", Port: 9000}
 	_, sender, _ := listener(t, self, Callbacks{OnPeerSeen: rec.record})
 
-	ping := Ping{Type: "opensave-ping", NodeID: "them", DeviceName: "Laptop", Port: 8384}
+	ping := Ping{Type: "sidesave-ping", NodeID: "them", DeviceName: "Laptop", Port: 8384}
 	sendPing(t, sender, ping)
 	if !waitFor(5*time.Second, func() bool { return rec.count() >= 1 }) {
 		t.Fatal("the first ping was never seen")
@@ -165,7 +165,7 @@ func TestDiscovery_OurOwnBroadcastIsIgnored(t *testing.T) {
 	self := Ping{NodeID: "me", DeviceName: "My PC", Port: 9000}
 	m, sender, _ := listener(t, self, Callbacks{OnPeerSeen: rec.record})
 
-	sendPing(t, sender, Ping{Type: "opensave-ping", NodeID: "me", DeviceName: "My PC", Port: 9000})
+	sendPing(t, sender, Ping{Type: "sidesave-ping", NodeID: "me", DeviceName: "My PC", Port: 9000})
 
 	// Give the read loop a fair chance to get it wrong.
 	time.Sleep(500 * time.Millisecond)
@@ -189,7 +189,7 @@ func TestDiscovery_JunkOnThePortIsIgnoredAndDoesNotStopDiscovery(t *testing.T) {
 	for _, junk := range [][]byte{
 		[]byte("this is not json at all"),
 		[]byte(`{"type":"something-else","nodeId":"x"}`),
-		[]byte(`{"type":"opensave-ping","nodeId":12345}`),
+		[]byte(`{"type":"sidesave-ping","nodeId":12345}`),
 		[]byte(`{}`),
 		{},
 	} {
@@ -203,7 +203,7 @@ func TestDiscovery_JunkOnThePortIsIgnoredAndDoesNotStopDiscovery(t *testing.T) {
 	}
 
 	// The loop must still be alive and still discover a real device.
-	sendPing(t, sender, Ping{Type: "opensave-ping", NodeID: "them", DeviceName: "Real", Port: 8384})
+	sendPing(t, sender, Ping{Type: "sidesave-ping", NodeID: "them", DeviceName: "Real", Port: 8384})
 	if !waitFor(5*time.Second, func() bool { return rec.count() == 1 }) {
 		t.Fatal("discovery stopped working after receiving junk — one malformed " +
 			"datagram on the LAN would disable peer discovery until restart")
@@ -216,7 +216,7 @@ func TestDiscovery_MissingDeviceTypeDefaultsToDesktop(t *testing.T) {
 	rec := &seenRecorder{}
 	_, sender, _ := listener(t, Ping{NodeID: "me", Port: 9000}, Callbacks{OnPeerSeen: rec.record})
 
-	sendPing(t, sender, Ping{Type: "opensave-ping", NodeID: "them", DeviceName: "Unknown", Port: 8384})
+	sendPing(t, sender, Ping{Type: "sidesave-ping", NodeID: "them", DeviceName: "Unknown", Port: 8384})
 	if !waitFor(5*time.Second, func() bool { return rec.count() > 0 }) {
 		t.Fatal("the ping was never seen")
 	}

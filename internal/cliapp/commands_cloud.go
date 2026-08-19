@@ -19,7 +19,7 @@ import (
 // bar to copy back.
 //
 // It also claimed WebDAV and friends were configurable "entirely from here"
-// with `opensave cloud setup`, a command that did not exist. Both are now
+// with `sidesave cloud setup`, a command that did not exist. Both are now
 // real, so a headless server or a Deck in Game Mode can set up cloud backup
 // without a desktop anywhere in the process.
 
@@ -56,16 +56,16 @@ func cmdCloud(args []string) int {
 }
 
 const cloudUsage = `usage:
-  opensave cloud connect <provider>       Sign in to Google Drive, Dropbox or OneDrive
-  opensave cloud setup <provider> [opts]  Configure WebDAV, a webhook, or a local folder
-  opensave cloud disconnect               Forget the current provider
-  opensave cloud status                   Provider, and whether it's connected
-  opensave cloud browse                   Everything stored in the cloud
-  opensave cloud list <gameId>            Cloud snapshots for one game
-  opensave cloud push <gameId>            Upload this game's local snapshots
-  opensave cloud restore <gameId> <file>  Pull a cloud snapshot back
-  opensave cloud delete <id> <file>       Remove one cloud snapshot
-  opensave cloud delete <gameId> --yes    Remove every cloud copy of a game
+  sidesave cloud connect <provider>       Sign in to Google Drive, Dropbox or OneDrive
+  sidesave cloud setup <provider> [opts]  Configure WebDAV, a webhook, or a local folder
+  sidesave cloud disconnect               Forget the current provider
+  sidesave cloud status                   Provider, and whether it's connected
+  sidesave cloud browse                   Everything stored in the cloud
+  sidesave cloud list <gameId>            Cloud snapshots for one game
+  sidesave cloud push <gameId>            Upload this game's local snapshots
+  sidesave cloud restore <gameId> <file>  Pull a cloud snapshot back
+  sidesave cloud delete <id> <file>       Remove one cloud snapshot
+  sidesave cloud delete <gameId> --yes    Remove every cloud copy of a game
 
   providers: google-drive, dropbox, onedrive, webdav, webhook, local
 
@@ -105,8 +105,8 @@ func providerID(name string) string {
 func cloudConnect(asJSON bool, args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr,
-			"usage: opensave cloud connect <google-drive|dropbox|onedrive>\n"+
-				"  For WebDAV, a webhook or a local folder use `opensave cloud setup`.")
+			"usage: sidesave cloud connect <google-drive|dropbox|onedrive>\n"+
+				"  For WebDAV, a webhook or a local folder use `sidesave cloud setup`.")
 		return 1
 	}
 	provider := providerID(args[0])
@@ -115,7 +115,7 @@ func cloudConnect(asJSON bool, args []string) int {
 	case "":
 		return fail(asJSON, fmt.Errorf("unknown provider %q", args[0]))
 	default:
-		return fail(asJSON, fmt.Errorf("%s does not sign in — configure it with `opensave cloud setup %s`", args[0], args[0]))
+		return fail(asJSON, fmt.Errorf("%s does not sign in — configure it with `sidesave cloud setup %s`", args[0], args[0]))
 	}
 
 	raw, err := daemonRequest("POST", "/api/auth/start", map[string]any{"provider": provider})
@@ -136,7 +136,7 @@ func cloudConnect(asJSON bool, args []string) int {
 		return emitJSON(map[string]any{
 			"provider": provider, "authUrl": start.AuthURL,
 			"autoCallback": start.AutoCallback,
-			"next":         "open authUrl, approve, then: opensave cloud connect " + args[0] + " --code <code>",
+			"next":         "open authUrl, approve, then: sidesave cloud connect " + args[0] + " --code <code>",
 		})
 	}
 
@@ -154,7 +154,7 @@ func cloudConnect(asJSON bool, args []string) int {
 	fmt.Println()
 	if start.AutoCallback {
 		note("This machine is listening for the redirect, so if you open the link here it may finish on its own.")
-		hint("opensave cloud status     check whether it completed")
+		hint("sidesave cloud status     check whether it completed")
 		fmt.Println()
 	}
 	fmt.Println("  2. The browser lands on a localhost page that won't load. That's expected —")
@@ -162,7 +162,7 @@ func cloudConnect(asJSON bool, args []string) int {
 	fmt.Println()
 	fmt.Println("  3. Paste it back:")
 	fmt.Println()
-	fmt.Printf("     %s\n", faint("opensave cloud connect "+args[0]+" --code <code>"))
+	fmt.Printf("     %s\n", faint("sidesave cloud connect "+args[0]+" --code <code>"))
 	fmt.Println()
 	return 0
 }
@@ -184,13 +184,13 @@ func cloudFinishAuth(asJSON bool, code string) int {
 	} else {
 		success("Connected.")
 	}
-	hint("opensave cloud push <gameId>")
+	hint("sidesave cloud push <gameId>")
 	return 0
 }
 
 // cloudSetup configures the providers that need settings rather than a
 // sign-in. The comment at the top of this file has claimed since it was
-// written that these "work entirely from here" via `opensave cloud setup` —
+// written that these "work entirely from here" via `sidesave cloud setup` —
 // the command did not exist.
 func cloudSetup(asJSON bool, args []string) int {
 	if len(args) == 0 {
@@ -237,7 +237,7 @@ func cloudSetup(asJSON bool, args []string) int {
 		}
 
 	case "google_drive", "dropbox", "onedrive":
-		return fail(asJSON, fmt.Errorf("%s signs in rather than being configured — use `opensave cloud connect %s`", args[0], args[0]))
+		return fail(asJSON, fmt.Errorf("%s signs in rather than being configured — use `sidesave cloud connect %s`", args[0], args[0]))
 	default:
 		return fail(asJSON, fmt.Errorf("unknown provider %q\n\n%s", args[0], cloudSetupUsage))
 	}
@@ -249,17 +249,17 @@ func cloudSetup(asJSON bool, args []string) int {
 		return emitJSON(map[string]any{"provider": provider, "configured": true})
 	}
 	success("Cloud backup set to %s", bold(provider))
-	hint("opensave cloud status", "opensave cloud push <gameId>")
+	hint("sidesave cloud status", "sidesave cloud push <gameId>")
 	return 0
 }
 
 const cloudSetupUsage = `usage:
-  opensave cloud setup local   --path <folder>
-  opensave cloud setup webdav  --url <url> [--user <u>] [--password <p>]
-  opensave cloud setup webhook --url <url> [--headers '<json>']
+  sidesave cloud setup local   --path <folder>
+  sidesave cloud setup webdav  --url <url> [--user <u>] [--password <p>]
+  sidesave cloud setup webhook --url <url> [--headers '<json>']
 
   Google Drive, Dropbox and OneDrive sign in instead:
-  opensave cloud connect <provider>`
+  sidesave cloud connect <provider>`
 
 func cloudDisconnect(asJSON bool) int {
 	if _, err := daemonRequest("POST", "/api/auth/disconnect", map[string]any{}); err != nil {
@@ -314,7 +314,7 @@ func cloudStatus(asJSON bool) int {
 	section("Cloud backup")
 	if provider == "" || provider == "local" && !enabled {
 		field("provider", faint("none configured"))
-		hint("opensave cloud status --json     see the raw settings",
+		hint("sidesave cloud status --json     see the raw settings",
 			"set a provider up in the desktop app, or use a local/NAS folder")
 		fmt.Println()
 		return 0
@@ -362,7 +362,7 @@ func cloudBrowse(asJSON bool) int {
 	if total == 0 {
 		section("Cloud backup")
 		note("Nothing stored in the cloud yet.")
-		hint("opensave cloud push <gameId>")
+		hint("sidesave cloud push <gameId>")
 		fmt.Println()
 		return 0
 	}
@@ -379,7 +379,7 @@ func cloudBrowse(asJSON bool) int {
 		}
 	}
 	t.render()
-	hint("opensave cloud restore <gameId> <file>")
+	hint("sidesave cloud restore <gameId> <file>")
 	fmt.Println()
 	return 0
 }
@@ -412,7 +412,7 @@ func decodeCloudBrowse(raw []byte) ([]cloudBrowseGame, error) {
 
 func cloudList(asJSON bool, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave cloud list <gameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave cloud list <gameId>")
 		return 1
 	}
 	raw, err := daemonRequest("GET", "/api/cloud/snapshots/"+args[0], nil)
@@ -439,7 +439,7 @@ func cloudList(asJSON bool, args []string) int {
 	if len(snaps) == 0 {
 		section(args[0])
 		note("No cloud snapshots for this game.")
-		hint("opensave cloud push " + args[0])
+		hint("sidesave cloud push " + args[0])
 		fmt.Println()
 		return 0
 	}
@@ -450,14 +450,14 @@ func cloudList(asJSON bool, args []string) int {
 		t.add(accent(s.SnapshotID), faint(s.Branch), humanBytes(s.SizeBytes), faint(s.FileName))
 	}
 	t.render()
-	hint("opensave cloud restore " + args[0] + " <file>")
+	hint("sidesave cloud restore " + args[0] + " <file>")
 	fmt.Println()
 	return 0
 }
 
 func cloudPush(asJSON bool, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave cloud push <gameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave cloud push <gameId>")
 		return 1
 	}
 	raw, err := daemonRequest("POST", "/api/cloud/sync-local/"+args[0], map[string]any{})
@@ -482,8 +482,8 @@ func cloudPush(asJSON bool, args []string) int {
 func cloudRestore(asJSON bool, args []string) int {
 	if len(args) < 2 {
 		fmt.Fprintln(os.Stderr,
-			"usage: opensave cloud restore <gameId> <fileName>\n"+
-				"  list the file names with `opensave cloud list <gameId>`")
+			"usage: sidesave cloud restore <gameId> <fileName>\n"+
+				"  list the file names with `sidesave cloud list <gameId>`")
 		return 1
 	}
 	raw, err := daemonRequest("POST", "/api/cloud/restore/"+args[0],
@@ -496,15 +496,15 @@ func cloudRestore(asJSON bool, args []string) int {
 	}
 	success("Restored %s from the cloud", accent(args[1]))
 	note("It landed as a snapshot — roll back to it to replace the live save.")
-	hint("opensave snapshots " + args[0])
+	hint("sidesave snapshots " + args[0])
 	return 0
 }
 
 const cloudDeleteUsage = `usage:
-  opensave cloud delete <gameId> <fileName>   Remove one cloud snapshot
-  opensave cloud delete <gameId> --yes        Remove every cloud copy of a game
+  sidesave cloud delete <gameId> <fileName>   Remove one cloud snapshot
+  sidesave cloud delete <gameId> --yes        Remove every cloud copy of a game
 
-  File names come from ` + "`opensave cloud list <gameId>`" + `.`
+  File names come from ` + "`sidesave cloud list <gameId>`" + `.`
 
 // cloudDeleteOne removes a single cloud snapshot.
 //
@@ -536,7 +536,7 @@ func cloudDeleteOne(asJSON bool, gameID, fileName string) int {
 	}
 	if !found {
 		return fail(asJSON, fmt.Errorf(
-			"%s is not a cloud snapshot of %s — run `opensave cloud list %s`", fileName, gameID, gameID))
+			"%s is not a cloud snapshot of %s — run `sidesave cloud list %s`", fileName, gameID, gameID))
 	}
 
 	if _, err := daemonRequest("POST", "/api/cloud/delete/"+gameID, map[string]any{
@@ -579,7 +579,7 @@ func cloudDelete(asJSON bool, args []string) int {
 		}
 		warning("This deletes every cloud copy of %s.", bold(gameID))
 		note("Local snapshots on this device are not touched.")
-		hint("opensave cloud delete " + gameID + " --yes")
+		hint("sidesave cloud delete " + gameID + " --yes")
 		return 1
 	}
 
@@ -681,14 +681,14 @@ func cmdFiles(args []string) int {
 		t.add(faint(size), f.Path)
 	}
 	t.render()
-	hint(fmt.Sprintf("opensave files %s %s <path>     restore just one file", gameID, snapID))
+	hint(fmt.Sprintf("sidesave files %s %s <path>     restore just one file", gameID, snapID))
 	fmt.Println()
 	return 0
 }
 
 const filesUsage = `usage:
-  opensave files <gameId> <snapshotId>          List what's in a snapshot
-  opensave files <gameId> <snapshotId> <path>   Restore a single file from it`
+  sidesave files <gameId> <snapshotId>          List what's in a snapshot
+  sidesave files <gameId> <snapshotId> <path>   Restore a single file from it`
 
 // ── Peers ────────────────────────────────────────────────────────────────
 
@@ -698,7 +698,7 @@ const filesUsage = `usage:
 func cmdProbe(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave probe <host[:port]>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave probe <host[:port]>")
 		return 1
 	}
 
@@ -725,14 +725,14 @@ func cmdProbe(args []string) int {
 	target := fmt.Sprintf("%s:%d", host, port)
 	if res.Reachable {
 		success("%s is reachable.", bold(target))
-		hint("opensave pair " + target)
+		hint("sidesave pair " + target)
 		return 0
 	}
 	warning("%s did not answer.", bold(target))
 	if res.Error != "" {
 		note(res.Error)
 	}
-	note("Check OpenSave is running there, and that a firewall isn't blocking the port.")
+	note("Check SideSave is running there, and that a firewall isn't blocking the port.")
 	return 1
 }
 
@@ -742,7 +742,7 @@ func cmdForget(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr,
-			"usage: opensave forget <peerId>\n"+
+			"usage: sidesave forget <peerId>\n"+
 				"  Removes a stale device record. Use `unpair` for a device that\n"+
 				"  still exists, so it's told about it too.")
 		return 1

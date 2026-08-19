@@ -3,7 +3,7 @@ package syncengine
 import (
 	"testing"
 
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 // TestDetectConflictIgnoresDirOnlyDivergence pins the reason conflicts were

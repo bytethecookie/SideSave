@@ -9,7 +9,7 @@
 package syncengine
 
 import (
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 // clockSkewToleranceMs matches the JS engine's 2-second allowance when

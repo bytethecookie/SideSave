@@ -1,4 +1,4 @@
-// Package store implements OpenSave's persistence layer: an embedded
+// Package store implements SideSave's persistence layer: an embedded
 // SQLite database (replacing the original single-JSON-file db.js) plus a
 // one-time importer for existing users' legacy JSON data.
 package store

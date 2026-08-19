@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // useLocalCloud points the daemon's cloud backend at a directory and returns

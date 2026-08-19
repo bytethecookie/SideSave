@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-const installedName = "opensave"
+const installedName = "sidesave"
 
-const pathActivationHint = "Open a new terminal, or run `hash -r`, and `opensave` will resolve."
+const pathActivationHint = "Open a new terminal, or run `hash -r`, and `sidesave` will resolve."
 
 // defaultInstallDir follows the XDG user-binary convention. ~/.local/bin is
 // already on PATH on most desktop distributions (and on SteamOS), so the
@@ -28,11 +28,11 @@ func normalizePathEntry(p string) string {
 	return strings.TrimRight(strings.TrimSpace(p), "/")
 }
 
-// writeAliases links `os` and `opensave-cli` to the installed binary.
+// writeAliases links `os` and `sidesave-cli` to the installed binary.
 // Symlinks are free here, unlike on Windows.
 func writeAliases(dir string) []string {
 	var out []string
-	for _, alias := range []string{"os", "opensave-cli"} {
+	for _, alias := range []string{"os", "sidesave-cli"} {
 		link := filepath.Join(dir, alias)
 		if _, err := os.Lstat(link); err == nil {
 			_ = os.Remove(link)
@@ -76,7 +76,7 @@ func ensureOnPath(dir string) (bool, error) {
 	}
 
 	line := fmt.Sprintf("export PATH=\"%s:$PATH\"", dir)
-	marker := "# added by opensave install"
+	marker := "# added by sidesave install"
 	var wrote bool
 	for _, p := range profiles {
 		existing, err := os.ReadFile(p)

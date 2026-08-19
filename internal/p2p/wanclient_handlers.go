@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/internal/p2p/pairing"
-	"github.com/opensave/opensave/internal/p2p/syncengine"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/p2p/pairing"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 // handleMessage dispatches one relay message, mirroring

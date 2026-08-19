@@ -1,8 +1,8 @@
-// Package relay implements the OpenSave WAN relay: a stateless WebSocket
+// Package relay implements the SideSave WAN relay: a stateless WebSocket
 // room broker (clients joining with the same ?room= code relay messages to
 // each other) plus the Google Drive OAuth proxy that keeps the client
 // secret server-side — a port of src/relay-server.js, wire-compatible with
-// both the Go and JS OpenSave clients.
+// both the Go and JS SideSave clients.
 package relay
 
 import (
@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/version"
 	"io"
 	"net"
 	"net/http"

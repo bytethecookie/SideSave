@@ -153,9 +153,9 @@ func cmdConflicts(args []string) int {
 	}
 
 	hint(
-		"opensave resolve <game> keep-both      keeps both, theirs on a branch (safest)",
-		"opensave resolve <game> keep-local     this device's save wins",
-		"opensave resolve <game> keep-remote    the other device's save wins",
+		"sidesave resolve <game> keep-both      keeps both, theirs on a branch (safest)",
+		"sidesave resolve <game> keep-local     this device's save wins",
+		"sidesave resolve <game> keep-remote    the other device's save wins",
 	)
 	fmt.Println()
 	return 0
@@ -188,7 +188,7 @@ func cmdResolve(args []string) int {
 	}
 	c, ok := conflicts[gameID]
 	if !ok {
-		return fail(asJSON, fmt.Errorf("no active conflict for %q — run `opensave conflicts`", gameID))
+		return fail(asJSON, fmt.Errorf("no active conflict for %q — run `sidesave conflicts`", gameID))
 	}
 
 	if _, err := daemonRequest("POST", "/api/games/"+gameID+"/resolve-conflict", map[string]any{
@@ -205,11 +205,11 @@ func cmdResolve(args []string) int {
 	// background; the request only confirms it was accepted.
 	success("Resolving %s (%s).", bold(gameID), accent(choice))
 	note("This runs in the background — a large save can take a while.")
-	hint("opensave conflicts")
+	hint("sidesave conflicts")
 	return 0
 }
 
-const resolveUsage = `usage: opensave resolve <gameId> keep-both|keep-local|keep-remote
+const resolveUsage = `usage: sidesave resolve <gameId> keep-both|keep-local|keep-remote
 
   keep-both     Keep both saves; the peer's lands on a separate branch (safest)
   keep-local    This device's save wins
@@ -264,7 +264,7 @@ func fetchConflicts() (map[string]conflictInfo, error) {
 // cmdPeers lists paired devices and their status.
 // cmdPeerGames lists what a paired device is tracking.
 //
-// `opensave link` already accepts a peer's game id — LinkGames records the
+// `sidesave link` already accepts a peer's game id — LinkGames records the
 // alias and leaves the local library alone when the id isn't one of ours — so
 // a cross-device link was possible from here, but only if you already knew an
 // id the CLI had no way to show you. The desktop picker listed them; this is
@@ -273,10 +273,10 @@ func cmdPeerGames(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr,
-			"usage: opensave peers games <peerId>\n"+
+			"usage: sidesave peers games <peerId>\n"+
 				"  Lists what that device is tracking, so you can link one of its\n"+
-				"  entries to a game here with `opensave link`.\n"+
-				"  Device ids come from `opensave peers`.")
+				"  entries to a game here with `sidesave link`.\n"+
+				"  Device ids come from `sidesave peers`.")
 		return 1
 	}
 	peerID := args[0]
@@ -315,7 +315,7 @@ func cmdPeerGames(args []string) int {
 		t.add(accent(g.ID), bold(g.Name), appID, faint(g.SavePath))
 	}
 	t.render()
-	hint("opensave link <localGameId> <theirGameId>     treat them as the same game")
+	hint("sidesave link <localGameId> <theirGameId>     treat them as the same game")
 	fmt.Println()
 	return 0
 }
@@ -379,7 +379,7 @@ func cmdPeers(args []string) int {
 			t.add(bold(name), faint(origin), faint(r.PeerID))
 		}
 		t.render()
-		hint("opensave pair approve <id>")
+		hint("sidesave pair approve <id>")
 	}
 
 	if len(payload.DiscoveredPeers) > 0 {
@@ -393,15 +393,15 @@ func cmdPeers(args []string) int {
 			t.add(bold(d.Name), faint(addr))
 		}
 		t.render()
-		hint("opensave pair <address>")
+		hint("sidesave pair <address>")
 	}
 
 	if len(payload.Peers) == 0 && len(payload.DiscoveredPeers) == 0 && len(payload.PairingRequests) == 0 {
 		section("Devices")
 		note("Nothing paired or discovered yet.")
 		hint(
-			"opensave pair <address>        same network",
-			"opensave relay join <code>     different networks",
+			"sidesave pair <address>        same network",
+			"sidesave relay join <code>     different networks",
 		)
 	}
 	fmt.Println()
@@ -481,13 +481,13 @@ func cmdPair(args []string) int {
 			t.add(bold(name), faint(origin), faint(r.PeerID))
 		}
 		t.render()
-		hint("opensave pair approve <id>", "opensave pair reject <id>")
+		hint("sidesave pair approve <id>", "sidesave pair reject <id>")
 		fmt.Println()
 		return 0
 
 	case "approve":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave pair approve <peerId>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave pair approve <peerId>")
 			return 1
 		}
 		raw, err := daemonRequest("POST", "/api/peers/approve", map[string]any{"peerId": args[1]})
@@ -502,7 +502,7 @@ func cmdPair(args []string) int {
 
 	case "reject":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave pair reject <peerId>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave pair reject <peerId>")
 			return 1
 		}
 		raw, err := daemonRequest("POST", "/api/peers/reject", map[string]any{"peerId": args[1]})
@@ -516,7 +516,7 @@ func cmdPair(args []string) int {
 		return 0
 
 	default:
-		// `opensave pair <host[:port]>` — ask that device to pair.
+		// `sidesave pair <host[:port]>` — ask that device to pair.
 		host := args[0]
 		port := 8383
 		if h, p, ok := strings.Cut(host, ":"); ok {
@@ -535,22 +535,22 @@ func cmdPair(args []string) int {
 		}
 		success("Pairing request sent to %s.", bold(fmt.Sprintf("%s:%d", host, port)))
 		note("Pairing is mutual — approve it on that device to finish.")
-		hint("opensave pair requests     (on the other device)")
+		hint("sidesave pair requests     (on the other device)")
 		return 0
 	}
 }
 
 const pairUsage = `usage:
-  opensave pair <host[:port]>     Ask a device on your LAN to pair
-  opensave pair requests          Show incoming pairing requests
-  opensave pair approve <peerId>  Approve an incoming request
-  opensave pair reject <peerId>   Reject an incoming request`
+  sidesave pair <host[:port]>     Ask a device on your LAN to pair
+  sidesave pair requests          Show incoming pairing requests
+  sidesave pair approve <peerId>  Approve an incoming request
+  sidesave pair reject <peerId>   Reject an incoming request`
 
 // cmdUnpair drops a paired device.
 func cmdUnpair(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave unpair <peerId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave unpair <peerId>")
 		return 1
 	}
 	raw, err := daemonRequest("POST", "/api/peers/unpair", map[string]any{"peerId": args[0]})
@@ -593,7 +593,7 @@ func cmdRelay(args []string) int {
 		if s.SyncCode == "" {
 			field("room", faint("not joined"))
 			field("relay", faint(s.RelayURL))
-			hint("opensave relay join <code>     same code on every device")
+			hint("sidesave relay join <code>     same code on every device")
 			fmt.Println()
 			return 0
 		}
@@ -604,7 +604,7 @@ func cmdRelay(args []string) int {
 
 	case "join":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave relay join <code>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave relay join <code>")
 			return 1
 		}
 		raw, err := daemonRequest("POST", "/api/settings", map[string]any{"syncCode": args[1]})
@@ -636,6 +636,6 @@ func cmdRelay(args []string) int {
 }
 
 const relayUsage = `usage:
-  opensave relay status        Show the current relay room
-  opensave relay join <code>   Join a relay room (same code on every device)
-  opensave relay leave         Leave the current room`
+  sidesave relay status        Show the current relay room
+  sidesave relay join <code>   Join a relay room (same code on every device)
+  sidesave relay leave         Leave the current room`

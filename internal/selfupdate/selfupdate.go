@@ -1,4 +1,4 @@
-// Package selfupdate holds the mechanics of replacing a running OpenSave
+// Package selfupdate holds the mechanics of replacing a running SideSave
 // binary with a newer one: downloading it, checking it is actually an
 // executable for this platform, and swapping it into place.
 //
@@ -86,7 +86,7 @@ func ValidateExecutable(path string) error {
 		return err
 	}
 	if info.Size() < minPlausibleBinary {
-		return fmt.Errorf("downloaded file is too small (%d bytes) to be OpenSave", info.Size())
+		return fmt.Errorf("downloaded file is too small (%d bytes) to be SideSave", info.Size())
 	}
 	f, err := os.Open(path)
 	if err != nil {

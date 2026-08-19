@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/opensave/opensave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
 )
 
 // peerRoutes: pairing lifecycle + manual sync + conflict resolution.
@@ -216,7 +216,7 @@ func (s *Server) unpair(w http.ResponseWriter, peerID string) {
 }
 
 // handleProbePeer checks whether an address:port hosts a reachable
-// OpenSave daemon (used by the "add device by IP" UI flow).
+// SideSave daemon (used by the "add device by IP" UI flow).
 func (s *Server) handleProbePeer(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Address string `json:"address"`

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.bytethecookie.SideSave</id>
+  <name>SideSave</name>
+  <summary>Peer-to-peer save sync for non-Steam Steam shortcuts</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.bytethecookie">
+    <name>bytethecookie, forked from OpenSave by Siva Prakash &amp; contributors</name>
+  </developer>
+  <description>
+    <p>
+      SideSave keeps save data in sync across every device you play on — PC,
+      laptop, Steam Deck — for games added to Steam as a non-Steam shortcut.
+      Those saves aren't covered by Steam Cloud (that only syncs real
+      Steam-store games), which is the gap this exists to fill. It watches
+      your save folders, snapshots them the moment a game writes, and syncs
+      devices directly over LAN or through a relay — no accounts, no server.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Identifies non-Steam shortcuts by their real name, read straight from Steam's own shortcuts.vdf</li>
+      <li>Per-game snapshots with one-click restore and branching</li>
+      <li>Direct device-to-device sync with content-based conflict detection</li>
+      <li>Optional cloud mirroring to Google Drive, Dropbox, or OneDrive</li>
+      <li>Steam Deck aware: finds saves inside Proton prefixes and on SD cards</li>
+    </ul>
+    <p>
+      A fork of OpenSave, narrowed to just this one job — see the project
+      README for what changed and why.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.bytethecookie.SideSave.desktop</launchable>
+  <url type="vcs-browser">https://github.com/bytethecookie/OpenSave</url>
+  <categories>
+    <category>Game</category>
+    <category>Utility</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="__VERSION__" date="__DATE__"/>
+  </releases>
+</component>

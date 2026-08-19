@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
 )
 
 func TestEncodeBlocksRoundTrips(t *testing.T) {

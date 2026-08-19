@@ -3,7 +3,7 @@ package p2p
 import (
 	"testing"
 
-	"github.com/opensave/opensave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
 )
 
 // TestTrackSyncOutcome verifies the interrupted-sync failsafe queues a game

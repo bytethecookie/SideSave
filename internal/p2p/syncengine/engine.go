@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/internal/snapshot"
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // Conflict is a diverged-save state awaiting user resolution.
@@ -1028,7 +1028,7 @@ func humanBytes(n int64) string {
 func (e *Engine) deviceName() string {
 	settings, err := e.Store.GetSettings()
 	if err != nil {
-		return "OpenSave"
+		return "SideSave"
 	}
 	return settings.DeviceName
 }

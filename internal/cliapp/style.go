@@ -7,7 +7,7 @@ import (
 	"unicode/utf8"
 )
 
-// Terminal styling built on OpenSave's palette — purple accent on a dark
+// Terminal styling built on SideSave's palette — purple accent on a dark
 // background — with two hard rules:
 //
 //   1. Nothing is emitted when output isn't a terminal. Piping to jq, a file
@@ -91,7 +91,7 @@ func symDot() string   { return sym("·", "-") }
 
 // section prints a titled block header, e.g.
 //
-//	OpenSave · Devices
+//	SideSave · Devices
 //	──────────────────
 func section(title string) {
 	fmt.Println()

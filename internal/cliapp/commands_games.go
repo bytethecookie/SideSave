@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opensave/opensave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/daemon"
 )
 
 // Per-game configuration and history management — everything the desktop
@@ -104,7 +104,7 @@ func cmdGame(d *daemon.Daemon, args []string) int {
 	return 0
 }
 
-const gameUsage = `usage: opensave game <gameId> set <key> <value>
+const gameUsage = `usage: sidesave game <gameId> set <key> <value>
 
   name <text>            Display name (also how peers match this game)
   path <dir|file>        Move tracking to a different save location
@@ -154,7 +154,7 @@ func cmdUntrackAll(d *daemon.Daemon, args []string) int {
 		}
 		warning("This will untrack all %d game(s).", len(games))
 		note("Save files and snapshot archives on disk are kept.")
-		hint("opensave untrack-all --yes")
+		hint("sidesave untrack-all --yes")
 		return 1
 	}
 
@@ -171,7 +171,7 @@ func cmdUntrackAll(d *daemon.Daemon, args []string) int {
 	}
 	success("Untracked %d game(s).", n)
 	note("Snapshots on disk were kept.")
-	hint("opensave scan     re-add them from the correct locations")
+	hint("sidesave scan     re-add them from the correct locations")
 	return 0
 }
 
@@ -211,7 +211,7 @@ func cmdPrune(args []string) int {
 func cmdSnapshotDelete(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave snapshot-delete <gameId> <snapshotId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave snapshot-delete <gameId> <snapshotId>")
 		return 1
 	}
 	rawResp, err := daemonRequest("DELETE",
@@ -237,7 +237,7 @@ func cmdSnapshotDelete(args []string) int {
 func cmdBranchDelete(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave branch-delete <gameId> <branch>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave branch-delete <gameId> <branch>")
 		return 1
 	}
 	gameID, branch := args[0], args[1]
@@ -280,7 +280,7 @@ func cmdScanPath(d *daemon.Daemon, args []string) int {
 		section("Extra scan folders")
 		if len(settings.CustomScanPaths) == 0 {
 			note("None. Auto-scan checks Steam, emulators and the save database.")
-			hint("opensave scanpath add <dir>")
+			hint("sidesave scanpath add <dir>")
 			fmt.Println()
 			return 0
 		}
@@ -292,7 +292,7 @@ func cmdScanPath(d *daemon.Daemon, args []string) int {
 
 	case "add":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave scanpath add <dir>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave scanpath add <dir>")
 			return 1
 		}
 		abs, err := filepath.Abs(args[1])
@@ -323,7 +323,7 @@ func cmdScanPath(d *daemon.Daemon, args []string) int {
 
 	case "remove":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave scanpath remove <dir>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave scanpath remove <dir>")
 			return 1
 		}
 		abs, _ := filepath.Abs(args[1])
@@ -356,15 +356,15 @@ func cmdScanPath(d *daemon.Daemon, args []string) int {
 }
 
 const scanPathUsage = `usage:
-  opensave scanpath list           Extra folders auto-scan looks in
-  opensave scanpath add <dir>      Add one (each subfolder becomes a candidate)
-  opensave scanpath remove <dir>   Stop scanning it`
+  sidesave scanpath list           Extra folders auto-scan looks in
+  sidesave scanpath add <dir>      Add one (each subfolder becomes a candidate)
+  sidesave scanpath remove <dir>   Stop scanning it`
 
 // cmdLaunch starts a tracked game through its configured executable.
 func cmdLaunch(args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave launch <gameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave launch <gameId>")
 		return 1
 	}
 	raw, err := daemonRequest("POST", "/api/games/"+args[0]+"/launch", map[string]any{})

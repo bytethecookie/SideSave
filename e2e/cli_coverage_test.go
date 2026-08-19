@@ -210,11 +210,11 @@ func TestCLI_StatusCommandsAllAnswer(t *testing.T) {
 	for _, args := range cmds {
 		out, code := c.run(args...)
 		if code != 0 {
-			t.Errorf("`opensave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
+			t.Errorf("`sidesave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
 			continue
 		}
 		if strings.TrimSpace(out) == "" {
-			t.Errorf("`opensave %s` printed nothing at all", strings.Join(args, " "))
+			t.Errorf("`sidesave %s` printed nothing at all", strings.Join(args, " "))
 		}
 	}
 }
@@ -234,12 +234,12 @@ func TestCLI_StatusCommandsEmitValidJSON(t *testing.T) {
 	} {
 		out, code := c.run(args...)
 		if code != 0 {
-			t.Errorf("`opensave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
+			t.Errorf("`sidesave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
 			continue
 		}
 		var v any
 		if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &v); err != nil {
-			t.Errorf("`opensave %s` did not emit valid JSON: %v\n%s",
+			t.Errorf("`sidesave %s` did not emit valid JSON: %v\n%s",
 				strings.Join(args, " "), err, out)
 		}
 	}
@@ -248,12 +248,12 @@ func TestCLI_StatusCommandsEmitValidJSON(t *testing.T) {
 // ── Shell completion ─────────────────────────────────────────────────────
 
 // Completion scripts get `eval`'d in a user's shell rc. An empty or broken
-// one breaks their terminal, not just OpenSave.
+// one breaks their terminal, not just SideSave.
 func TestCLI_CompletionEmitsAScriptPerShell(t *testing.T) {
 	c := newCLI(t)
 	for _, shell := range []string{"bash", "zsh"} {
 		out := c.mustRun("completion", shell)
-		if !strings.Contains(out, "opensave") {
+		if !strings.Contains(out, "sidesave") {
 			t.Errorf("`completion %s` does not mention the command it completes:\n%s", shell, out)
 		}
 		if len(strings.TrimSpace(out)) < 50 {

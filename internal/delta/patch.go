@@ -64,7 +64,7 @@ var renameFile = os.Rename
 // freshly written files (especially .exe payloads) for scanning, which
 // makes the finalizing rename fail with a sharing violation even though
 // nothing is actually wrong. One failed rename here used to strand the
-// .opensave.tmp file on disk, which then leaked into manifests and synced
+// .sidesave.tmp file on disk, which then leaked into manifests and synced
 // to peers as a real file.
 func replaceWithRetry(tmpPath, filePath string) error {
 	var err error

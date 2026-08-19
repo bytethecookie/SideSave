@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// The OpenSave wordmark. Shown at the top of the status panel when the
+// The SideSave wordmark. Shown at the top of the status panel when the
 // terminal is wide enough to render it without wrapping — a banner that wraps
 // looks broken, so anything narrower falls back to a plain title line.
 //

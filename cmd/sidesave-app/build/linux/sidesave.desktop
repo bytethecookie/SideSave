@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=SideSave
+GenericName=Non-Steam Shortcut Save Sync
+Comment=P2P save sync for games added to Steam as a non-Steam shortcut
+Exec=sidesave
+Icon=sidesave
+Terminal=false
+Categories=Game;Utility;
+Keywords=save;sync;backup;games;steam;shortcut;proton;
+StartupWMClass=SideSave

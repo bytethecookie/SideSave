@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/relay"
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/relay"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // startRelay boots an in-process relay server on a random port and returns

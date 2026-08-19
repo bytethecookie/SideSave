@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // mkdirOnly creates an empty directory inside a device's save folder without

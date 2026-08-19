@@ -221,7 +221,7 @@ func TestPatchFile_ReconstructsAndVerifiesHash(t *testing.T) {
 	if !bytes.Equal(got, wholeExpected) {
 		t.Error("patched file content does not match expected reconstruction")
 	}
-	if _, err := os.Stat(filePath + ".opensave.tmp"); !os.IsNotExist(err) {
+	if _, err := os.Stat(filePath + ".sidesave.tmp"); !os.IsNotExist(err) {
 		t.Error("temp file should not remain after a successful patch")
 	}
 }
@@ -251,7 +251,7 @@ func TestPatchFile_RejectsCorruptReconstruction(t *testing.T) {
 	if string(got) != "original" {
 		t.Error("original file must be left untouched when patch verification fails")
 	}
-	if _, err := os.Stat(filePath + ".opensave.tmp"); !os.IsNotExist(err) {
+	if _, err := os.Stat(filePath + ".sidesave.tmp"); !os.IsNotExist(err) {
 		t.Error("temp file should be cleaned up after a failed patch")
 	}
 }

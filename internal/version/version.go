@@ -10,11 +10,11 @@ import (
 )
 
 // Version is the app's semantic version. Overridable via
-// -ldflags "-X github.com/opensave/opensave/internal/version.Version=…".
+// -ldflags "-X github.com/bytethecookie/sidesave/internal/version.Version=…".
 var Version = "2.2.2"
 
 // BuildTime is the unix-seconds build timestamp, injected via
-// -ldflags "-X github.com/opensave/opensave/internal/version.BuildTime=…".
+// -ldflags "-X github.com/bytethecookie/sidesave/internal/version.BuildTime=…".
 // Empty for plain `go build`/`go test` binaries.
 var BuildTime = ""
 

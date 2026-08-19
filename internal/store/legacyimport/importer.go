@@ -1,5 +1,5 @@
 // Package legacyimport reads the original Node.js daemon's JSON database
-// (~/.opensave/opensave-db.json, written by src/daemon/db.js) and imports
+// (~/.sidesave/sidesave-db.json, written by src/daemon/db.js) and imports
 // it into the new SQLite store, exactly once, on first launch of the Go
 // app on a machine that previously ran the JS app.
 //
@@ -11,7 +11,7 @@
 //     pairing records by it, so regenerating it would silently break every
 //     existing pairing.
 //   - Snapshot zipPath values are copied verbatim (after the same
-//     ".savesync" -> ".opensave" substitution db.js itself performs),
+//     ".savesync" -> ".sidesave" substitution db.js itself performs),
 //     since the physical backup files do not move.
 package legacyimport
 
@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
-// legacyDB mirrors the exact JSON shape of opensave-db.json.
+// legacyDB mirrors the exact JSON shape of sidesave-db.json.
 type legacyDB struct {
 	Settings legacySettings         `json:"settings"`
 	Games    map[string]legacyGame  `json:"games"`
@@ -172,7 +172,7 @@ func importAll(s *store.Store, legacy legacyDB) error {
 	// The old db.js rewrote ".savesync" paths on load; replicate that here
 	// in case this JSON predates the JS app's own directory migration.
 	fixPath := func(p string) string {
-		return strings.Replace(p, ".savesync", ".opensave", 1)
+		return strings.Replace(p, ".savesync", ".sidesave", 1)
 	}
 
 	settings := store.Settings{

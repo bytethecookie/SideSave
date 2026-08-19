@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/opensave/opensave/relay"
+	"github.com/bytethecookie/sidesave/relay"
 )
 
-// RelayHost runs an OpenSave relay server inside this process when the
+// RelayHost runs an SideSave relay server inside this process when the
 // user enables "host a relay" — so friends can connect directly to this
 // machine without a third-party relay. Safe for concurrent use.
 type RelayHost struct {

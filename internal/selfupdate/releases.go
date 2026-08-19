@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 // Asset is one downloadable file attached to a release.

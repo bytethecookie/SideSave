@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // Setting an App ID by hand exists for the games automatic detection cannot

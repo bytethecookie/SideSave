@@ -95,7 +95,7 @@ func (s *Server) handleBrowserCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if provider == "" {
-		fail("This sign-in link has already been used or expired — start again from OpenSave.")
+		fail("This sign-in link has already been used or expired — start again from SideSave.")
 		return
 	}
 	if oauthErr != "" {
@@ -122,9 +122,9 @@ func (s *Server) handleBrowserCallback(w http.ResponseWriter, r *http.Request) {
 // writeCallbackPage renders the little page the user's browser lands on.
 func writeCallbackPage(w http.ResponseWriter, ok bool, detail string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	icon, title, sub := "✅", "Connected to OpenSave", "Signed in as <strong>"+detail+"</strong>. You can close this tab and return to the app."
+	icon, title, sub := "✅", "Connected to SideSave", "Signed in as <strong>"+detail+"</strong>. You can close this tab and return to the app."
 	if !ok {
-		icon, title, sub = "⚠️", "Sign-in didn't complete", detail+" You can close this tab and try again from OpenSave."
+		icon, title, sub = "⚠️", "Sign-in didn't complete", detail+" You can close this tab and try again from SideSave."
 	}
 	fmt.Fprintf(w, `<!doctype html><html><head><meta charset="utf-8"><title>%s</title></head>
 <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0c0c0d;color:#e8e8ea;font-family:'Segoe UI',system-ui,sans-serif;">

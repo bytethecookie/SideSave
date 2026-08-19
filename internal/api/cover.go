@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opensave/opensave/internal/presets"
+	"github.com/bytethecookie/sidesave/internal/presets"
 )
 
 // httpStatusError distinguishes a "the CDN answered, but not 200" failure

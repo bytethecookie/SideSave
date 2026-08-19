@@ -1,0 +1,31 @@
+[Unit]
+# Shipped inside the .deb / .rpm, where the binaries live in /usr/bin.
+# (The Flatpak install uses sidesave-daemon.service instead, which goes
+# through `flatpak run` — using that here would fail, since a native install
+# has no Flatpak.)
+#
+# Enable per user account, because the daemon runs as you and reads your save
+# files:
+#   systemctl --user enable --now sidesave-daemon
+#
+# On SteamOS also run `sudo loginctl enable-linger $USER`, so it survives
+# Game Mode / Desktop Mode switches.
+Description=SideSave save-sync daemon
+Documentation=man:sidesave(1)
+Documentation=https://github.com/bytethecookie/OpenSave
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sidesave-cli daemon start
+Restart=on-failure
+RestartSec=10
+
+# Background sync should never compete with a running game.
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+
+[Install]
+WantedBy=default.target

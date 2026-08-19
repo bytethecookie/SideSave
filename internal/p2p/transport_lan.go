@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/opensave/opensave/internal/p2p/syncengine"
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // lanTransport speaks the /api/p2p/* HTTP protocol directly to a peer.

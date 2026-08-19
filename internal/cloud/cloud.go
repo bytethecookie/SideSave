@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // CloudFile is one remote snapshot entry.
@@ -70,7 +70,7 @@ type Service struct {
 	HTTP      *http.Client
 
 	driveFolderMu sync.Mutex
-	driveFolderID string // cached id of the auto-managed "OpenSave" Drive folder
+	driveFolderID string // cached id of the auto-managed "SideSave" Drive folder
 }
 
 // New creates a production Service.
@@ -109,7 +109,7 @@ func (s *Service) config() (store.CloudConfig, error) {
 }
 
 // driveFolder returns the Drive folder snapshots live in: the user's
-// configured folder ID if set, otherwise a folder named "OpenSave" in the
+// configured folder ID if set, otherwise a folder named "SideSave" in the
 // Drive root — found or created on first use and cached for the process
 // lifetime. Keeps snapshots out of the user's Drive root.
 func (s *Service) driveFolder(cfg store.CloudConfig, token string) (string, error) {
@@ -122,7 +122,7 @@ func (s *Service) driveFolder(cfg store.CloudConfig, token string) (string, erro
 		return s.driveFolderID, nil
 	}
 
-	query := "name = 'OpenSave' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents"
+	query := "name = 'SideSave' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents"
 	listURL := s.Endpoints.GoogleAPI + "/drive/v3/files?q=" + url.QueryEscape(query) + "&fields=" + url.QueryEscape("files(id)")
 	req, _ := http.NewRequest(http.MethodGet, listURL, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -140,7 +140,7 @@ func (s *Service) driveFolder(cfg store.CloudConfig, token string) (string, erro
 	}
 
 	meta, _ := json.Marshal(map[string]any{
-		"name":     "OpenSave",
+		"name":     "SideSave",
 		"mimeType": "application/vnd.google-apps.folder",
 	})
 	creq, _ := http.NewRequest(http.MethodPost, s.Endpoints.GoogleAPI+"/drive/v3/files?fields=id", bytes.NewReader(meta))
@@ -152,7 +152,7 @@ func (s *Service) driveFolder(cfg store.CloudConfig, token string) (string, erro
 	if err := s.doJSON(creq, &created); err != nil {
 		return "", googleDriveErr(err)
 	}
-	s.Log("info", `cloud: created "OpenSave" folder in Google Drive`)
+	s.Log("info", `cloud: created "SideSave" folder in Google Drive`)
 	s.driveFolderID = created.ID
 	return created.ID, nil
 }
@@ -474,7 +474,7 @@ func (s *Service) uploadDriveResumable(token, folderID, fileName string, f *os.F
 
 // uploadDropboxSimple streams one request (≤150 MB per Dropbox's API).
 func (s *Service) uploadDropboxSimple(token, fileName string, f *os.File, size int64) error {
-	args, _ := json.Marshal(map[string]any{"path": "/OpenSave/" + fileName, "mode": "overwrite", "mute": true})
+	args, _ := json.Marshal(map[string]any{"path": "/SideSave/" + fileName, "mode": "overwrite", "mute": true})
 	req, err := http.NewRequest(http.MethodPost, s.Endpoints.DropboxContent+"/2/files/upload", f)
 	if err != nil {
 		return err
@@ -549,7 +549,7 @@ func (s *Service) uploadDropboxSession(token, fileName string, f *os.File, size 
 
 	_, err = call("/2/files/upload_session/finish", map[string]any{
 		"cursor": map[string]any{"session_id": sessionID, "offset": offset},
-		"commit": map[string]any{"path": "/OpenSave/" + fileName, "mode": "overwrite", "mute": true},
+		"commit": map[string]any{"path": "/SideSave/" + fileName, "mode": "overwrite", "mute": true},
 	}, nil, 0)
 	if err != nil {
 		return fmt.Errorf("session finish: %w", err)
@@ -704,7 +704,7 @@ func (s *Service) List() ([]CloudFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		body, _ := json.Marshal(map[string]string{"path": "/OpenSave"})
+		body, _ := json.Marshal(map[string]string{"path": "/SideSave"})
 		req, _ := http.NewRequest(http.MethodPost, s.Endpoints.DropboxAPI+"/2/files/list_folder", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
@@ -715,7 +715,7 @@ func (s *Service) List() ([]CloudFile, error) {
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode == http.StatusConflict {
-			return []CloudFile{}, nil // /OpenSave folder doesn't exist yet
+			return []CloudFile{}, nil // /SideSave folder doesn't exist yet
 		}
 		if resp.StatusCode >= 400 {
 			raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
@@ -850,7 +850,7 @@ func (s *Service) Download(fileName, localPath string) error {
 		if err != nil {
 			return err
 		}
-		args, _ := json.Marshal(map[string]string{"path": "/OpenSave/" + fileName})
+		args, _ := json.Marshal(map[string]string{"path": "/SideSave/" + fileName})
 		req, _ := http.NewRequest(http.MethodPost, s.Endpoints.DropboxContent+"/2/files/download", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Dropbox-API-Arg", string(args))
@@ -988,7 +988,7 @@ func (s *Service) Delete(f CloudFile) error {
 		if err != nil {
 			return err
 		}
-		body, _ := json.Marshal(map[string]string{"path": "/OpenSave/" + f.Name})
+		body, _ := json.Marshal(map[string]string{"path": "/SideSave/" + f.Name})
 		req, _ := http.NewRequest(http.MethodPost, s.Endpoints.DropboxAPI+"/2/files/delete_v2", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
@@ -1064,7 +1064,7 @@ func sortByCreatedDesc(files []CloudFile) {
 func googleDriveErr(err error) error {
 	msg := strings.ToLower(err.Error())
 	if strings.Contains(msg, "insufficient") && (strings.Contains(msg, "403") || strings.Contains(msg, "permission")) {
-		return fmt.Errorf("Google Drive access was not granted for this account — open Cloud Backup, Disconnect, then sign in again and TICK THE CHECKBOX that allows OpenSave to access its own Drive files")
+		return fmt.Errorf("Google Drive access was not granted for this account — open Cloud Backup, Disconnect, then sign in again and TICK THE CHECKBOX that allows SideSave to access its own Drive files")
 	}
 	return fmt.Errorf("Google Drive: %w", err)
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // A long alternating session over the relay.

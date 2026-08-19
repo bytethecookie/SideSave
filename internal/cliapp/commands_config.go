@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/opensave/opensave/internal/daemon"
-	"github.com/opensave/opensave/internal/selfupdate"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/selfupdate"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 // Settings and game-linking management, so a headless install isn't forced
@@ -49,7 +49,7 @@ func cmdExclude(d *daemon.Daemon, args []string) int {
 
 	case "add":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave exclude add <path>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave exclude add <path>")
 			return 1
 		}
 		abs, err := filepath.Abs(args[1])
@@ -77,7 +77,7 @@ func cmdExclude(d *daemon.Daemon, args []string) int {
 
 	case "remove":
 		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "usage: opensave exclude remove <path>")
+			fmt.Fprintln(os.Stderr, "usage: sidesave exclude remove <path>")
 			return 1
 		}
 		abs, _ := filepath.Abs(args[1])
@@ -110,9 +110,9 @@ func cmdExclude(d *daemon.Daemon, args []string) int {
 }
 
 const excludeUsage = `usage:
-  opensave exclude list            Folders auto-scan skips
-  opensave exclude add <path>      Skip a folder (and everything inside it)
-  opensave exclude remove <path>   Stop skipping it`
+  sidesave exclude list            Folders auto-scan skips
+  sidesave exclude add <path>      Skip a folder (and everything inside it)
+  sidesave exclude remove <path>   Stop skipping it`
 
 // cmdLink merges one tracked game into another so both ids sync to the same
 // save — the same title tracked under different names on two machines.
@@ -120,7 +120,7 @@ func cmdLink(d *daemon.Daemon, args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 2 {
 		fmt.Fprintln(os.Stderr,
-			"usage: opensave link <gameId> <otherGameId>\n"+
+			"usage: sidesave link <gameId> <otherGameId>\n"+
 				"  Treats both as the same game. <otherGameId> is merged in and\n"+
 				"  removed from the library; its save files are left alone.")
 		return 1
@@ -140,7 +140,7 @@ func cmdLink(d *daemon.Daemon, args []string) int {
 func cmdUnlinkGame(d *daemon.Daemon, args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: opensave unlink <aliasGameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave unlink <aliasGameId>")
 		return 1
 	}
 	if err := d.UnlinkGame(args[0]); err != nil {
@@ -157,7 +157,7 @@ func cmdUnlinkGame(d *daemon.Daemon, args []string) int {
 func cmdLinks(d *daemon.Daemon, args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: opensave links <gameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave links <gameId>")
 		return 1
 	}
 	aliases, err := d.Store.ListGameAliases(args[0])
@@ -257,14 +257,14 @@ func cmdConfig(d *daemon.Daemon, args []string) int {
 }
 
 const configUsage = `usage:
-  opensave config [list]                    Show current settings
-  opensave config set device-name <name>    How other devices see this one
-  opensave config set match-by-app-id <t/f> Link same-App-ID games across devices
-  opensave config set snapshot-limit <n>    Automatic snapshots kept per branch (0 = all)
-  opensave config set manual-snapshot-limit <n>
+  sidesave config [list]                    Show current settings
+  sidesave config set device-name <name>    How other devices see this one
+  sidesave config set match-by-app-id <t/f> Link same-App-ID games across devices
+  sidesave config set snapshot-limit <n>    Automatic snapshots kept per branch (0 = all)
+  sidesave config set manual-snapshot-limit <n>
                                             Manual snapshots kept per branch (0 = keep forever)
-  opensave config set relay-url <url>       Relay server for internet sync
-  opensave config set update-channel <stable|beta>
+  sidesave config set relay-url <url>       Relay server for internet sync
+  sidesave config set update-channel <stable|beta>
                                             Whether updates include pre-releases`
 
 // manualLimitLabel renders the manual-snapshot budget. 0 is the default and

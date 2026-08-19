@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
-// fixtureJSON mirrors a real opensave-db.json written by the JS app,
+// fixtureJSON mirrors a real sidesave-db.json written by the JS app,
 // including a stale ".savesync" zipPath (user who never re-ran the JS app
 // after its own directory migration) and per-peer sync lineage state.
 const fixtureJSON = `{
@@ -19,9 +19,9 @@ const fixtureJSON = `{
     "port": 8383,
     "syncInterval": 5000,
     "syncOnWatch": true,
-    "dataDir": "C:\\Users\\Siva\\.opensave",
-    "backupsDir": "C:\\Users\\Siva\\.opensave\\backups",
-    "syncBackupsDir": "C:\\Users\\Siva\\.opensave\\backups",
+    "dataDir": "C:\\Users\\Siva\\.sidesave",
+    "backupsDir": "C:\\Users\\Siva\\.sidesave\\backups",
+    "syncBackupsDir": "C:\\Users\\Siva\\.sidesave\\backups",
     "autoDeleteBackups": false,
     "autoDeleteDays": 30,
     "autoSyncOnTrack": false,
@@ -84,7 +84,7 @@ const fixtureJSON = `{
               "timestamp": "2026-06-01T10:00:00.000Z",
               "comment": "",
               "isSystemAuto": true,
-              "zipPath": "C:\\Users\\Siva\\.opensave\\backups\\elden-ring\\ng-plus\\snap_1700000000002.zip",
+              "zipPath": "C:\\Users\\Siva\\.sidesave\\backups\\elden-ring\\ng-plus\\snap_1700000000002.zip",
               "sizeBytes": 654321,
               "branch": "ng-plus"
             }
@@ -117,8 +117,8 @@ const fixtureJSON = `{
 func setupFixture(t *testing.T) (jsonPath, sqlitePath, logPath string) {
 	t.Helper()
 	dir := t.TempDir()
-	jsonPath = filepath.Join(dir, "opensave-db.json")
-	sqlitePath = filepath.Join(dir, "opensave.db")
+	jsonPath = filepath.Join(dir, "sidesave-db.json")
+	sqlitePath = filepath.Join(dir, "sidesave.db")
 	logPath = filepath.Join(dir, "migration.log")
 	if err := os.WriteFile(jsonPath, []byte(fixtureJSON), 0o666); err != nil {
 		t.Fatal(err)
@@ -208,7 +208,7 @@ func TestRun_FullImport(t *testing.T) {
 		t.Fatalf("expected 1 snapshot on main, got %d", len(mainSnaps))
 	}
 	// The stale .savesync zipPath must get the same substitution db.js applies.
-	wantZip := `C:\Users\Siva\.opensave\backups\elden-ring\main\snap_1700000000001.zip`
+	wantZip := `C:\Users\Siva\.sidesave\backups\elden-ring\main\snap_1700000000001.zip`
 	if mainSnaps[0].ZipPath != wantZip {
 		t.Errorf("zipPath = %q, want %q", mainSnaps[0].ZipPath, wantZip)
 	}
@@ -260,8 +260,8 @@ func TestRun_FullImport(t *testing.T) {
 
 func TestRun_CorruptJSONLeavesEverythingUntouched(t *testing.T) {
 	dir := t.TempDir()
-	jsonPath := filepath.Join(dir, "opensave-db.json")
-	sqlitePath := filepath.Join(dir, "opensave.db")
+	jsonPath := filepath.Join(dir, "sidesave-db.json")
+	sqlitePath := filepath.Join(dir, "sidesave.db")
 	if err := os.WriteFile(jsonPath, []byte("{not valid json"), 0o666); err != nil {
 		t.Fatal(err)
 	}
@@ -281,8 +281,8 @@ func TestRun_CorruptJSONLeavesEverythingUntouched(t *testing.T) {
 
 func TestRun_MissingNodeIDRefusesImport(t *testing.T) {
 	dir := t.TempDir()
-	jsonPath := filepath.Join(dir, "opensave-db.json")
-	sqlitePath := filepath.Join(dir, "opensave.db")
+	jsonPath := filepath.Join(dir, "sidesave-db.json")
+	sqlitePath := filepath.Join(dir, "sidesave.db")
 	if err := os.WriteFile(jsonPath, []byte(`{"settings":{"deviceName":"X"},"games":{},"peers":{}}`), 0o666); err != nil {
 		t.Fatal(err)
 	}

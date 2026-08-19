@@ -8,7 +8,7 @@ import (
 
 // ── Plumbing ─────────────────────────────────────────────────────────────
 
-// Exit codes are the CLI's contract with scripts and with `opensave service`.
+// Exit codes are the CLI's contract with scripts and with `sidesave service`.
 // A rejected command that exits 0 turns a typo into a silent no-op.
 func TestCLI_ExitCodes(t *testing.T) {
 	c := newCLI(t)

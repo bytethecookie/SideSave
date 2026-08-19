@@ -12,12 +12,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/internal/p2p/discovery"
-	"github.com/opensave/opensave/internal/p2p/pairing"
-	"github.com/opensave/opensave/internal/p2p/syncengine"
-	"github.com/opensave/opensave/internal/snapshot"
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/p2p/discovery"
+	"github.com/bytethecookie/sidesave/internal/p2p/pairing"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // resyncRetryInterval is how often the failsafe re-attempts games whose
@@ -221,7 +221,7 @@ func (e *Engine) Stop() {
 	// Bounded, because correctness here must not come at the cost of a hung
 	// quit: a transfer stuck in a call that ignores cancellation would
 	// otherwise keep the app alive for as long as its own timeout. Giving up
-	// leaves a .opensave.tmp behind, which is already handled — manifests
+	// leaves a .sidesave.tmp behind, which is already handled — manifests
 	// exclude those and the walk garbage-collects stale ones.
 	e.stopMu.Lock()
 	e.stopping = true

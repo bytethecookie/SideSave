@@ -14,9 +14,9 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/go-chi/chi/v5"
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/internal/snapshot"
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // handleSnapshotFiles lists the entries inside a snapshot ZIP (for the
@@ -288,7 +288,7 @@ func (s *Server) exportSelectedSaves(outPath string, games []backupManifestGame)
 		s.Hub.Broadcast("backup-progress", map[string]any{
 			"op": "export", "done": i, "total": len(games), "current": g.Name,
 		})
-		tmp, tmpErr := os.CreateTemp("", "opensave-export-*.zip")
+		tmp, tmpErr := os.CreateTemp("", "sidesave-export-*.zip")
 		if tmpErr != nil {
 			return exported, skipped, tmpErr
 		}
@@ -483,7 +483,7 @@ func decompressBackup(sourcePath string) (string, func(), error) {
 	}
 	defer src.Close()
 
-	tmp, err := os.CreateTemp("", "opensave-import-*.zip")
+	tmp, err := os.CreateTemp("", "sidesave-import-*.zip")
 	if err != nil {
 		return "", nil, err
 	}
@@ -557,7 +557,7 @@ func (s *Server) importBackupV2(zr *zip.Reader, manifest *backupManifest, mode s
 		}
 
 		// Stage the inner save zip on disk.
-		tmp, err := os.CreateTemp("", "opensave-import-save-*.zip")
+		tmp, err := os.CreateTemp("", "sidesave-import-save-*.zip")
 		if err != nil {
 			res.Action, res.Error = "skipped", err.Error()
 			results = append(results, s.logImportResult(res))

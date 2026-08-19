@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // Linking two differently-named copies of a game is the documented fallback

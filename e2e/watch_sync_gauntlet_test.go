@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // The gauntlet: end-to-end verification that file watching and syncing

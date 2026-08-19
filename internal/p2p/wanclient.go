@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 const (

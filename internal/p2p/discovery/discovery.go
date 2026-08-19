@@ -1,6 +1,6 @@
 // Package discovery implements LAN peer discovery over UDP broadcast +
 // multicast, wire-compatible with the JS app's discovery.js: JSON
-// "opensave-ping" datagrams on port 8385 every 3 seconds, peers expiring
+// "sidesave-ping" datagrams on port 8385 every 3 seconds, peers expiring
 // after 20 seconds of silence.
 package discovery
 
@@ -23,7 +23,7 @@ const (
 
 // Ping is the discovery datagram, matching the JS wire format exactly.
 type Ping struct {
-	Type       string `json:"type"` // always "opensave-ping"
+	Type       string `json:"type"` // always "sidesave-ping"
 	NodeID     string `json:"nodeId"`
 	DeviceName string `json:"deviceName"`
 	DeviceType string `json:"deviceType"`
@@ -139,7 +139,7 @@ func (m *Manager) readLoop() {
 		}
 
 		var ping Ping
-		if err := json.Unmarshal(buf[:n], &ping); err != nil || ping.Type != "opensave-ping" {
+		if err := json.Unmarshal(buf[:n], &ping); err != nil || ping.Type != "sidesave-ping" {
 			continue
 		}
 
@@ -189,7 +189,7 @@ func (m *Manager) broadcastLoop() {
 
 func (m *Manager) broadcastPresence() {
 	ping := m.identity()
-	ping.Type = "opensave-ping"
+	ping.Type = "sidesave-ping"
 	raw, err := json.Marshal(ping)
 	if err != nil {
 		return

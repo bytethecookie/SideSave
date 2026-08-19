@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "SideSave",
+  "outputfilename": "SideSave",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "SideSave"
+  },
+  "info": {
+    "companyName": "SideSave",
+    "productName": "SideSave",
+    "productVersion": "2.2.2",
+    "copyright": "Copyright © 2026 Siva Prakash & OpenSave contributors; SideSave fork changes 2026",
+    "comments": "Peer-to-peer save sync for non-Steam Steam shortcuts"
+  }
+}

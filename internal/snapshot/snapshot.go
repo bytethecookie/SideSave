@@ -20,7 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // UploadHook is called after each snapshot is created, with the local zip
@@ -484,7 +484,7 @@ func copyToTempZip(src string) (string, error) {
 		return "", err
 	}
 	defer in.Close()
-	tmp, err := os.CreateTemp("", "opensave-restore-*.zip")
+	tmp, err := os.CreateTemp("", "sidesave-restore-*.zip")
 	if err != nil {
 		return "", err
 	}

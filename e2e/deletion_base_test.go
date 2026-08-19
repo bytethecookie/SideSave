@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/internal/delta"
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/internal/delta"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // A deletion propagated by a peer is applied straight to the filesystem: the

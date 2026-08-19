@@ -4,12 +4,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 func newMatchTestEngine(t *testing.T) (*Engine, *store.Store) {
 	t.Helper()
-	s, err := store.Open(filepath.Join(t.TempDir(), "opensave.db"))
+	s, err := store.Open(filepath.Join(t.TempDir(), "sidesave.db"))
 	if err != nil {
 		t.Fatalf("store.Open error = %v", err)
 	}

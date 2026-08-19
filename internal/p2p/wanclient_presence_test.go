@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 func newPresenceTestClient(t *testing.T) (*WanClient, *store.Store, *[]string) {
 	t.Helper()
-	s, err := store.Open(filepath.Join(t.TempDir(), "opensave.db"))
+	s, err := store.Open(filepath.Join(t.TempDir(), "sidesave.db"))
 	if err != nil {
 		t.Fatalf("store.Open error = %v", err)
 	}

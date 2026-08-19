@@ -107,7 +107,7 @@ func TestFailoverMigrationLeavesSelfHostedRelaysAlone(t *testing.T) {
 // re-run the failover and drag somebody who has since moved to their own relay
 // back onto the public one.
 func TestFailoverMigrationDoesNotReapplyOnReopen(t *testing.T) {
-	dir := t.TempDir() + "/opensave.db"
+	dir := t.TempDir() + "/sidesave.db"
 	s, err := Open(dir)
 	if err != nil {
 		t.Fatal(err)

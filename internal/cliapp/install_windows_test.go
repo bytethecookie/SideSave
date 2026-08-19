@@ -14,7 +14,7 @@ import (
 // and breaks unrelated tools. Every case below is one way that has happened
 // to real installers.
 func TestNextPathValue(t *testing.T) {
-	const dir = `C:\Users\x\AppData\Local\OpenSave\bin`
+	const dir = `C:\Users\x\AppData\Local\SideSave\bin`
 
 	for _, tc := range []struct {
 		name    string
@@ -35,7 +35,7 @@ func TestNextPathValue(t *testing.T) {
 			// Windows paths are case-insensitive; a re-run under a different
 			// spelling must not append a second copy.
 			name:    "already present in another case is left alone",
-			current: `C:\Windows;c:\users\x\appdata\local\opensave\BIN`,
+			current: `C:\Windows;c:\users\x\appdata\local\sidesave\BIN`,
 			want:    "",
 		},
 		{
@@ -79,10 +79,10 @@ func TestWriteAliasesProducesForwardingShims(t *testing.T) {
 
 	written := writeAliases(dir)
 	if len(written) != 2 {
-		t.Fatalf("expected shims for os and opensave-cli, got %v", written)
+		t.Fatalf("expected shims for os and sidesave-cli, got %v", written)
 	}
 
-	for _, alias := range []string{"os", "opensave-cli"} {
+	for _, alias := range []string{"os", "sidesave-cli"} {
 		body, err := os.ReadFile(filepath.Join(dir, alias+".cmd"))
 		if err != nil {
 			t.Fatalf("reading %s shim: %v", alias, err)

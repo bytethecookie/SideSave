@@ -3,7 +3,7 @@ package relay
 import (
 	"testing"
 
-	"github.com/opensave/opensave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
 )
 
 // The relay's per-client budget and the sync engine's batch sizing are two

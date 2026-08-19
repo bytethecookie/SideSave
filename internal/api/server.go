@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/opensave/opensave/internal/daemon"
-	"github.com/opensave/opensave/internal/logging"
-	"github.com/opensave/opensave/internal/p2p/syncengine"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/logging"
+	"github.com/bytethecookie/sidesave/internal/p2p/syncengine"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 // Server hosts the REST API and dashboard WebSocket for one daemon.

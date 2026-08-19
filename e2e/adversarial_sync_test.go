@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // A snapshot keeps filenames inside a zip; a sync puts them on the wire as

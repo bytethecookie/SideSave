@@ -1,25 +1,25 @@
-# OpenSave — User Guide
+# SideSave — User Guide
 
-OpenSave keeps your game saves in sync across your devices, peer-to-peer. No
+SideSave keeps your game saves in sync across your devices, peer-to-peer. No
 accounts, no subscriptions. This guide walks through everyday use.
 
 ## 1. First run
 
-When you open OpenSave the first time your library is empty. Two ways to add
+When you open SideSave the first time your library is empty. Two ways to add
 games:
 
 - **🔍 Auto-scan** — finds saves from Steam, emulators (RetroArch, Dolphin,
   Ryujinx, Yuzu, Citra, PCSX2, RPCS3, PPSSPP, Cemu, Xenia), Steam-emulator
   repacks (Goldberg, CODEX, RUNE, …), Epic, GOG, and Unreal games. Pick the
   ones you want and click **Track selected**.
-- **+ Track folder** — point OpenSave at any save folder or single save file
+- **+ Track folder** — point SideSave at any save folder or single save file
   manually.
 
 Tracked games appear in the sidebar and on the Home grid.
 
 ## 2. Snapshots & restore
 
-Every time a save changes, OpenSave takes a **snapshot** automatically (only
+Every time a save changes, SideSave takes a **snapshot** automatically (only
 changed blocks are stored, so history is cheap). Open a game to:
 
 - **Snapshot now** — take a manual snapshot with a comment.
@@ -38,7 +38,7 @@ changed blocks are stored, so history is cheap). Open a game to:
 
 ### On the same network (LAN)
 
-1. Install OpenSave on both devices.
+1. Install SideSave on both devices.
 2. Open **Devices** — they discover each other automatically over the LAN.
 3. Click **Pair**; approve the request on the other device.
 4. Paired devices sync tracked games automatically.
@@ -56,7 +56,7 @@ IP and port (default `8383`).
 
 ### Conflicts
 
-If the same save changed on two devices independently, OpenSave detects it
+If the same save changed on two devices independently, SideSave detects it
 from sync lineage (not clocks) and asks you to **keep yours, theirs, or both**
 (both creates a new branch). Nothing is overwritten without your choice.
 
@@ -83,7 +83,7 @@ restore snapshots per game.
 
 ### Beta builds
 
-By default OpenSave only offers you published releases. Tick **Offer me beta
+By default SideSave only offers you published releases. Tick **Offer me beta
 versions** under Settings → Updates to be offered pre-releases as well, if you
 want to try what is coming and report on it.
 
@@ -92,8 +92,8 @@ to find this setting first, and you will still be offered the stable release the
 moment it is newer than your build. From the command line:
 
 ```
-opensave config set update-channel beta      # or stable
-opensave update --check
+sidesave config set update-channel beta      # or stable
+sidesave update --check
 ```
 
 ### Snapshot retention
@@ -110,32 +110,32 @@ Both are set per game in its Configuration tab, or for newly tracked games
 under Settings → Snapshot history. From the command line:
 
 ```
-opensave game <gameId> set max-snapshots 20
-opensave game <gameId> set max-manual-snapshots 0     # 0 = keep forever
-opensave config set snapshot-limit 20                 # default for new games
-opensave config set manual-snapshot-limit 0
+sidesave game <gameId> set max-snapshots 20
+sidesave game <gameId> set max-manual-snapshots 0     # 0 = keep forever
+sidesave config set snapshot-limit 20                 # default for new games
+sidesave config set manual-snapshot-limit 0
 ```
 
 ## 6. Tray & background
 
-Closing the window **hides OpenSave to the system tray** so syncing keeps
+Closing the window **hides SideSave to the system tray** so syncing keeps
 running. Right-click the tray icon to reopen, sync all games, or quit.
 
 ## 7. Troubleshooting
 
 - **"404 Not Found" on launch** — another program is using port `8383`. Quit
-  the other OpenSave (or app on that port), or change the port in Settings →
+  the other SideSave (or app on that port), or change the port in Settings →
   Advanced.
 - **Devices don't see each other** — make sure both are on a *Private* network
-  profile and OpenSave is allowed through the firewall; otherwise pair by IP.
+  profile and SideSave is allowed through the firewall; otherwise pair by IP.
 - **Cloud upload fails with "session expired"** — reconnect the provider under
   Cloud Backup (see the Google note above).
 - **Steam Deck / Game Mode** — a Decky Loader plugin lives in
-  `opensave-decky-plugin/`.
+  `sidesave-decky-plugin/`.
 
 ## 8. Getting help
 
-Still stuck, or want to ask for something? **[Join the OpenSave Discord →](https://discord.gg/hvBv92DZvn)**
+Still stuck, or want to ask for something? **[Join the SideSave Discord →](https://discord.gg/hvBv92DZvn)**
 It is the quickest way to get an answer, and where new builds are discussed
 before they ship. Bugs are also welcome on
 [GitHub issues](https://github.com/Liquid-co/OpenSave/issues).

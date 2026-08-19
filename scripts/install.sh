@@ -1,7 +1,7 @@
 #!/bin/sh
-# OpenSave installer — headless CLI + daemon for Linux.
+# SideSave installer — headless CLI + daemon for Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Liquid-co/OpenSave/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/bytethecookie/OpenSave/main/scripts/install.sh | sh
 #
 # Installs to ~/.local/bin by default, so no root is needed. Override with:
 #   OPENSAVE_INSTALL_DIR=/usr/local/bin   where to put the binaries
@@ -14,7 +14,7 @@
 
 set -eu
 
-REPO="Liquid-co/OpenSave"
+REPO="bytethecookie/OpenSave"
 INSTALL_DIR="${OPENSAVE_INSTALL_DIR:-$HOME/.local/bin}"
 VERSION="${OPENSAVE_VERSION:-latest}"
 
@@ -47,7 +47,7 @@ arch="$(uname -m)"
 
 case "$os" in
     Linux) ;;
-    Darwin) die "macOS builds aren't published yet — build from source: go build ./cmd/opensave-cli" ;;
+    Darwin) die "macOS builds aren't published yet — build from source: go build ./cmd/sidesave-cli" ;;
     *) die "unsupported OS: $os" ;;
 esac
 
@@ -57,7 +57,7 @@ case "$arch" in
     *) die "unsupported architecture: $arch" ;;
 esac
 
-ASSET="opensave-linux-${arch}.tar.gz"
+ASSET="sidesave-linux-${arch}.tar.gz"
 
 # The arm64 build is the headless pair only — the desktop app needs native
 # WebKit, which doesn't cross-compile.
@@ -77,7 +77,7 @@ tmp="$(mktemp -d)"
 # shellcheck disable=SC2064  # expand tmp now, not at trap time
 trap "rm -rf '$tmp'" EXIT INT TERM
 
-say "Downloading OpenSave ($VERSION, linux/$arch)…"
+say "Downloading SideSave ($VERSION, linux/$arch)…"
 fetch "$BASE/$ASSET" "$tmp/$ASSET" || die "could not download $BASE/$ASSET"
 
 # Verify against the published checksums when they exist. Releases before
@@ -107,15 +107,15 @@ fi
 tar -xzf "$tmp/$ASSET" -C "$tmp" || die "could not extract $ASSET"
 
 # The archive's top-level directory differs by architecture
-# (opensave-linux, opensave-linux-arm64), so find it rather than assume.
+# (sidesave-linux, sidesave-linux-arm64), so find it rather than assume.
 src=""
-for candidate in "$tmp"/opensave-linux*; do
-    if [ -d "$candidate" ] && [ -f "$candidate/opensave-cli" ]; then
+for candidate in "$tmp"/sidesave-linux*; do
+    if [ -d "$candidate" ] && [ -f "$candidate/sidesave-cli" ]; then
         src="$candidate"
         break
     fi
 done
-[ -n "$src" ] || die "opensave-cli not found in $ASSET — unexpected archive layout"
+[ -n "$src" ] || die "sidesave-cli not found in $ASSET — unexpected archive layout"
 
 mkdir -p "$INSTALL_DIR" || die "could not create $INSTALL_DIR"
 
@@ -131,11 +131,11 @@ install_one() {
 }
 
 say "Installing…"
-install_one opensave-cli
-install_one opensave-relay
+install_one sidesave-cli
+install_one sidesave-relay
 
-# `opensave` is the name the docs, the man page and the tool's own help use,
-# and what the Windows installer has always produced. `opensave-cli` stays as
+# `sidesave` is the name the docs, the man page and the tool's own help use,
+# and what the Windows installer has always produced. `sidesave-cli` stays as
 # the real file because the systemd units, the .deb/.rpm layout and the Steam
 # Deck plugin all look it up by that name.
 link_alias() {
@@ -159,10 +159,10 @@ link_alias() {
     say "  $INSTALL_DIR/$alias_name"
 }
 
-link_alias opensave opensave-cli
-link_alias os opensave-cli
+link_alias sidesave sidesave-cli
+link_alias os sidesave-cli
 
-installed_version="$("$INSTALL_DIR/opensave-cli" version 2>/dev/null || echo "unknown")"
+installed_version="$("$INSTALL_DIR/sidesave-cli" version 2>/dev/null || echo "unknown")"
 say ""
 say "Installed: $installed_version"
 
@@ -188,7 +188,7 @@ add_to_path() {
         say "PATH already configured in $rc."
     elif {
         echo ""
-        echo "# Added by the OpenSave installer"
+        echo "# Added by the SideSave installer"
         echo "$line"
     } >> "$rc" 2>/dev/null; then
         say "Added $INSTALL_DIR to PATH in $rc."
@@ -208,18 +208,18 @@ add_to_path
 # ── Show what it found ───────────────────────────────────────────────────
 
 say ""
-"$INSTALL_DIR/opensave-cli" || true
+"$INSTALL_DIR/sidesave-cli" || true
 
 if [ "$NEW_SHELL_NEEDED" = "1" ]; then
-    say "Open a new terminal (or run: . $rc) for 'opensave' to work everywhere."
+    say "Open a new terminal (or run: . $rc) for 'sidesave' to work everywhere."
     say ""
 fi
 
 say "Next:"
-say "  opensave scan                 find your game saves"
-say "  opensave daemon start         run the sync service"
-say "  opensave service install      run it automatically on login"
-say "  opensave pair <other-device>  pair another machine"
+say "  sidesave scan                 find your game saves"
+say "  sidesave daemon start         run the sync service"
+say "  sidesave service install      run it automatically on login"
+say "  sidesave pair <other-device>  pair another machine"
 say ""
-say "'os' works as a short alias for 'opensave'."
+say "'os' works as a short alias for 'sidesave'."
 say "On a Steam Deck, also run: sudo loginctl enable-linger \$USER"

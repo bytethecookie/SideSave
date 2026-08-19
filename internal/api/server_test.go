@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/daemon"
 )
 
 type testServer struct {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensave/opensave/internal/config"
+	"github.com/bytethecookie/sidesave/internal/config"
 )
 
 // Commands that touch peers, pairing or syncing need the *running* daemon:
@@ -63,7 +63,7 @@ func daemonRequest(method, path string, body any) ([]byte, error) {
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"the OpenSave daemon isn't reachable at %s — start it with `opensave daemon start` (or `systemctl --user start opensave-daemon`)",
+			"the SideSave daemon isn't reachable at %s — start it with `sidesave daemon start` (or `systemctl --user start sidesave-daemon`)",
 			base)
 	}
 	defer resp.Body.Close()

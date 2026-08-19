@@ -1,4 +1,4 @@
-module github.com/opensave/opensave
+module github.com/bytethecookie/sidesave
 
 go 1.26.4
 

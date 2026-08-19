@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/relay"
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/relay"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // startRelayServer is startRelay's sibling that also hands back the server,
@@ -230,14 +230,14 @@ func readRaw(dir, rel string) []byte {
 	return raw
 }
 
-// walkForTempFiles fails the test if any .opensave.tmp survived.
+// walkForTempFiles fails the test if any .sidesave.tmp survived.
 func walkForTempFiles(t *testing.T, root string) {
 	t.Helper()
 	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info == nil || info.IsDir() {
 			return nil
 		}
-		if filepath.Ext(path) == ".tmp" || bytes.HasSuffix([]byte(path), []byte(".opensave.tmp")) {
+		if filepath.Ext(path) == ".tmp" || bytes.HasSuffix([]byte(path), []byte(".sidesave.tmp")) {
 			t.Errorf("temp file survived a successful sync: %s", path)
 		}
 		return nil

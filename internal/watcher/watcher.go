@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 const (
@@ -264,7 +264,7 @@ func (gw *gameWatch) eventRelevant(event fsnotify.Event) bool {
 	if strings.HasPrefix(name, ".") {
 		return false
 	}
-	if strings.HasSuffix(name, ".opensave.tmp") {
+	if strings.HasSuffix(name, ".sidesave.tmp") {
 		return false
 	}
 	if gw.isFile {

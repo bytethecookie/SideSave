@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="cmd/opensave-app/build/appicon.png" alt="OpenSave" width="120" />
+<img src="cmd/sidesave-app/build/appicon.png" alt="SideSave" width="120" />
 
-# OpenSave
+# SideSave
 
 ### Steam Cloud for every game you own.
 
-**OpenSave** syncs your game saves between devices, peer-to-peer — no Steam required, no accounts, no subscriptions. Point it at a folder, pair your devices, and your saves follow you everywhere.
+**SideSave** syncs your game saves between devices, peer-to-peer — no Steam required, no accounts, no subscriptions. Point it at a folder, pair your devices, and your saves follow you everywhere.
 
 [![Release](https://img.shields.io/github/v/release/Liquid-co/OpenSave?sort=semver)](https://github.com/Liquid-co/OpenSave/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -20,17 +20,17 @@
 
 <br>
 
-<img src="docs/screenshots/home-library.png" alt="OpenSave library — tracked games with cover art, branches, and snapshot counts" width="850" />
+<img src="docs/screenshots/home-library.png" alt="SideSave library — tracked games with cover art, branches, and snapshot counts" width="850" />
 
 </div>
 
 ---
 
-## Why OpenSave
+## Why SideSave
 
 Steam Cloud only covers games bought on Steam — and only when the developer opts in. Everything else (emulators, GOG, Epic, single-player games with no cloud support) is on you: manually copying save folders between your desktop, laptop, and Steam Deck, and hoping you grabbed the newest one.
 
-OpenSave gives **every** game the Steam Cloud experience:
+SideSave gives **every** game the Steam Cloud experience:
 
 - **You own it.** Saves sync directly between *your* devices. No account to create, nothing stored on someone else's server.
 - **It's automatic.** Auto-detects hundreds of games, watches for changes, and syncs the moment a save is written.
@@ -45,8 +45,8 @@ OpenSave gives **every** game the Steam Cloud experience:
 - **Smart conflict handling** — diverged saves are detected by **sync lineage**, not wall-clock timestamps. Keep yours, keep theirs, or keep both on a new branch.
 - **Cloud backup** — optional mirroring to Google Drive, Dropbox, OneDrive, WebDAV, a webhook, or a local/NAS folder.
 - **Cross-device game matching** — the same title tracked under different names on two machines (a Steam install here, a differently-named folder there) can be matched by Steam App ID or linked by hand. App-ID matching is opt-in, so two separate copies of a game are never merged without asking.
-- **A full command line** — `opensave` does everything the app does, for a Steam Deck in Game Mode or a headless server. See [Command line](#command-line).
-- **In-app updates** — one-click update from GitHub releases, pull a newer build straight from a paired device, or `opensave update` from the terminal.
+- **A full command line** — `sidesave` does everything the app does, for a Steam Deck in Game Mode or a headless server. See [Command line](#command-line).
+- **In-app updates** — one-click update from GitHub releases, pull a newer build straight from a paired device, or `sidesave update` from the terminal.
 - **Privacy-first** — no accounts, no telemetry. The relay only routes WebSocket frames and writes no save to disk; the hop to it is encrypted, and you can self-host it so nobody else is on the path at all.
 
 ## Screenshots
@@ -78,15 +78,15 @@ OpenSave gives **every** game the Steam Cloud experience:
 
 | Platform | Download | Run |
 |---|---|---|
-| **Windows** | `OpenSave.Setup.exe` (installer) or portable `OpenSave.exe` | Double-click |
-| **Linux** | `opensave-linux-amd64.tar.gz` | extract, then `./opensave` |
-| **Steam Deck / SteamOS** | `OpenSave.flatpak` | see [Steam Deck install](#steam-deck-install) |
+| **Windows** | `SideSave.Setup.exe` (installer) or portable `SideSave.exe` | Double-click |
+| **Linux** | `sidesave-linux-amd64.tar.gz` | extract, then `./sidesave` |
+| **Steam Deck / SteamOS** | `SideSave.flatpak` | see [Steam Deck install](#steam-deck-install) |
 
-Grab the latest from the [**Releases**](https://github.com/Liquid-co/OpenSave/releases) page.
+Grab the latest from the [**Releases**](https://github.com/bytethecookie/OpenSave/releases) page (this fork does not yet have automated release builds — see the fork's own build notes for building from source in the meantime).
 
 ### Steam Deck install
 
-> **Use `OpenSave.flatpak`, not `opensave-linux-amd64.tar.gz`.** The tarball's
+> **Use `SideSave.flatpak`, not `sidesave-linux-amd64.tar.gz`.** The tarball's
 > desktop app will not start on a stock Deck: SteamOS ships no WebKitGTK, which
 > it needs to draw its window. This trips people up because the tarball's name
 > reads like the Steam Deck build.
@@ -96,18 +96,18 @@ WebKitGTK and wipes manually-installed system packages on OS updates; the
 Flatpak bundles everything and survives updates.
 
 1. Switch to **Desktop Mode** (Steam button → Power → Switch to Desktop).
-2. Download `OpenSave.flatpak` from the [Releases](https://github.com/Liquid-co/OpenSave/releases) page.
+2. Download `SideSave.flatpak` from the [Releases](https://github.com/bytethecookie/OpenSave/releases) page, or build it yourself (see the fork's build notes).
 3. Double-click it to install via Discover, or run
-   `flatpak install --user OpenSave.flatpak` in Konsole.
-4. Launch OpenSave from the application menu. Optional: add it to Steam
+   `flatpak install --user SideSave.flatpak` in Konsole.
+4. Launch SideSave from the application menu. Optional: add it to Steam
    (right-click → *Add to Steam*) to open it from Game Mode.
 
 If you only want background syncing and no window, the **command line has no
 such constraint** — it needs no WebKitGTK and runs anywhere:
 
 ```bash
-curl -fsSL https://opensave.org/install.sh | sh
-opensave scan && opensave service install
+curl -fsSL https://sidesave.org/install.sh | sh
+sidesave scan && sidesave service install
 sudo loginctl enable-linger $USER
 ```
 
@@ -116,7 +116,7 @@ the app), and Proton game saves are detected inside their `compatdata`
 prefixes. The plain Linux tarball also works on the Deck if you install
 `webkit2gtk-4.1` yourself, but SteamOS updates can remove it — the
 Flatpak is the supported path. A Decky plugin for Game Mode lives in
-[`opensave-decky-plugin/`](opensave-decky-plugin/).
+[`sidesave-decky-plugin/`](sidesave-decky-plugin/).
 
 **Other handhelds / Arch-based distros (CachyOS, Bazzite-likes):** if
 your distro is *not* immutable (CachyOS isn't), the plain Linux tarball
@@ -133,14 +133,14 @@ for immutable systems like stock SteamOS.
   from Game Mode) — running it from a bare terminal session shows no
   window.
 
-> **Upgrading from the original (JS) OpenSave?** Your data migrates automatically on first launch — tracked games, snapshots, pairings, and cloud settings are imported from `~/.opensave/opensave-db.json` (kept as a backup, never deleted). Go and JS devices can pair and sync with each other during the transition.
+> **Upgrading from the original (JS) SideSave?** Your data migrates automatically on first launch — tracked games, snapshots, pairings, and cloud settings are imported from `~/.sidesave/sidesave-db.json` (kept as a backup, never deleted). Go and JS devices can pair and sync with each other during the transition.
 
 ## Quick start
 
-1. **Launch OpenSave** on your first device. It scans for installed games and shows detected saves as cover-art tiles.
+1. **Launch SideSave** on your first device. It scans for installed games and shows detected saves as cover-art tiles.
 2. **Track a game** — click a detected tile, or add any folder / save file manually.
 3. **Pair a second device.** On the same network, the other device appears automatically under **Devices** — approve the request. Remote? One device creates a **room code** under **Internet Sync**; the other joins with it.
-4. **Play.** When a save changes, OpenSave snapshots it and syncs it to every paired device. There's nothing else to do.
+4. **Play.** When a save changes, SideSave snapshots it and syncs it to every paired device. There's nothing else to do.
 
 Need to undo something? Open a game's **history** and roll back a snapshot — the whole save or a single file.
 
@@ -167,7 +167,7 @@ Need to undo something? Open a game's **history** and roll back a snapshot — t
 
 ## Command line
 
-`opensave` is a complete client, not a companion to the app: auto-detect saves,
+`sidesave` is a complete client, not a companion to the app: auto-detect saves,
 pair devices, sync, resolve conflicts, manage snapshots and branches, back up
 to the cloud, and run as a background service. A headless box — a NAS, a home
 server, or a Steam Deck that lives in Game Mode — never needs the desktop app.
@@ -176,10 +176,10 @@ No account, no token, no server to sign up to.
 
 <p align="center">
   <img src="docs/screenshots/cli-status.png" width="820"
-       alt="The OpenSave CLI status panel: the OpenSave wordmark in white and purple, then the version, whether the daemon is running, the device name, tracked games, paired devices and relay status, followed by suggested next commands.">
+       alt="The SideSave CLI status panel: the SideSave wordmark in white and purple, then the version, whether the daemon is running, the device name, tracked games, paired devices and relay status, followed by suggested next commands.">
 </p>
 
-Run `opensave` on its own and it tells you what is happening right now, and what
+Run `sidesave` on its own and it tells you what is happening right now, and what
 to do next. There is a fuller walkthrough on the
 [website](https://open-save.vercel.app/cli.html).
 
@@ -188,13 +188,13 @@ to do next. There is a fuller walkthrough on the
 **Linux & Steam Deck**
 
 ```bash
-curl -fsSL https://opensave.org/install.sh | sh
+curl -fsSL https://sidesave.org/install.sh | sh
 ```
 
 **Windows** (PowerShell)
 
 ```powershell
-irm https://opensave.org/install.ps1 | iex
+irm https://sidesave.org/install.ps1 | iex
 ```
 
 Installs to your user folder — no root, no admin — puts it on your `PATH`, and
@@ -202,8 +202,8 @@ shows the status panel when it is done. Downloads are verified against the
 `SHA256SUMS` published with each release; piping a script into a shell is enough
 trust on its own.
 
-Three names, one program: **`opensave`**, **`os`** as a short alias, and
-`opensave-cli` (the name the Steam Deck plugin and the Linux packages use
+Three names, one program: **`sidesave`**, **`os`** as a short alias, and
+`sidesave-cli` (the name the Steam Deck plugin and the Linux packages use
 internally). If something on your system already answers to `os`, the installer
 leaves it alone and says so.
 
@@ -213,13 +213,13 @@ To choose where it lands or pin a version:
 OPENSAVE_INSTALL_DIR=/usr/local/bin OPENSAVE_VERSION=v2.2.0 sh install.sh
 ```
 
-Or build it: `go build -o opensave ./cmd/opensave-cli`
+Or build it: `go build -o sidesave ./cmd/sidesave-cli`
 
 ### Keeping it current
 
 ```bash
-opensave update            # replace this binary with the latest release
-opensave update --check    # just report whether a newer one exists
+sidesave update            # replace this binary with the latest release
+sidesave update --check    # just report whether a newer one exists
 ```
 
 Pre-releases are never offered automatically — install those yourself from the
@@ -228,22 +228,22 @@ releases page.
 ### Getting started
 
 ```bash
-opensave scan                          # what is on this machine
-opensave add "Elden Ring" ~/.local/share/EldenRing
-opensave daemon start &                # the sync service
-opensave pair 192.168.1.42             # pair another device on the LAN
-opensave sync --all
+sidesave scan                          # what is on this machine
+sidesave add "Elden Ring" ~/.local/share/EldenRing
+sidesave daemon start &                # the sync service
+sidesave pair 192.168.1.42             # pair another device on the LAN
+sidesave sync --all
 ```
 
-Different networks instead of a LAN? Run `opensave relay join <code>` with the
+Different networks instead of a LAN? Run `sidesave relay join <code>` with the
 same made-up code on both devices — no port forwarding, and the relay only
 passes encrypted data through without storing it.
 
 ### Run it permanently
 
 ```bash
-opensave service install
-systemctl --user enable --now opensave-daemon
+sidesave service install
+systemctl --user enable --now sidesave-daemon
 sudo loginctl enable-linger $USER     # Steam Deck: survive Game Mode switches
 ```
 
@@ -341,15 +341,15 @@ entirely from the terminal.
 ### Scripting
 
 ```bash
-opensave daemon status --json | jq .gameCount
-opensave snapshots elden-ring --json | jq -r '.[0].id'
-opensave conflicts --json | jq 'keys'
+sidesave daemon status --json | jq .gameCount
+sidesave snapshots elden-ring --json | jq -r '.[0].id'
+sidesave conflicts --json | jq 'keys'
 ```
 
 Failures exit non-zero and, with `--json`, print `{"error": "..."}`.
 
-Full details: `man opensave` (shipped in the Linux tarball), or
-[`packaging/man/opensave.1`](packaging/man/opensave.1).
+Full details: `man sidesave` (shipped in the Linux tarball), or
+[`packaging/man/sidesave.1`](packaging/man/sidesave.1).
 
 The daemon exposes a local REST + WebSocket API (P2P on port `8383`) that the
 desktop UI, the CLI and the Steam Deck plugin all drive, so anything the app
@@ -360,13 +360,13 @@ can do is scriptable.
 ```bash
 # Desktop app (needs Go 1.26+, Node 18+, and the Wails CLI)
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
-cd cmd/opensave-app && wails build
+cd cmd/sidesave-app && wails build
 
 # Headless daemon + CLI
-go build ./cmd/opensave-cli
+go build ./cmd/sidesave-cli
 
 # Relay server (self-host)
-go build ./cmd/opensave-relay
+go build ./cmd/sidesave-relay
 ```
 
 Run the test suite:
@@ -378,22 +378,22 @@ go test ./e2e/...      # end-to-end pairing & sync tests
 
 ## Self-hosting the relay
 
-The relay is stateless — it brokers room codes and proxies OAuth, and writes no save to disk. What it forwards is encrypted in transit, but that encryption ends at the relay rather than at your other device, so a relay operator could read what passes through. Ours is `wss://relay.opensave.org`; run your own so that nobody but you is on the path:
+The relay is stateless — it brokers room codes and proxies OAuth, and writes no save to disk. What it forwards is encrypted in transit, but that encryption ends at the relay rather than at your other device, so a relay operator could read what passes through. Ours is `wss://relay.sidesave.org`; run your own so that nobody but you is on the path:
 
 ```bash
-./opensave-relay                     # listens on :8386
-PORT=10000 ./opensave-relay          # custom port
+./sidesave-relay                     # listens on :8386
+PORT=10000 ./sidesave-relay          # custom port
 docker build -f relay/Dockerfile .   # or as a container
 ```
 
-Point **Settings → Internet Sync → Relay server** at your instance. `opensave upnp 8386` forwards the port on UPnP-capable routers.
+Point **Settings → Internet Sync → Relay server** at your instance. `sidesave upnp 8386` forwards the port on UPnP-capable routers.
 
 ## Architecture
 
 ```
-cmd/opensave-app       Wails desktop app (daemon embedded + Svelte UI)
-cmd/opensave-cli       Headless daemon & CLI
-cmd/opensave-relay     Stateless WAN relay (room broker + OAuth proxy)
+cmd/sidesave-app       Wails desktop app (daemon embedded + Svelte UI)
+cmd/sidesave-cli       Headless daemon & CLI
+cmd/sidesave-relay     Stateless WAN relay (room broker + OAuth proxy)
 internal/
   store                SQLite persistence + legacy JSON import
   delta                Block hashing, manifest diff, patching
@@ -405,21 +405,21 @@ internal/
   api                  Local REST + WebSocket dashboard API
   daemon               Long-running service orchestration
   sysintegration       Tray, notifications, autostart
-opensave-decky-plugin  Steam Deck Game Mode plugin (Decky Loader)
+sidesave-decky-plugin  Steam Deck Game Mode plugin (Decky Loader)
 ```
 
 The daemon speaks the same REST/WebSocket API and P2P wire protocol as the original JS app, so old and new versions interoperate during a rollout.
 
 ## Data & privacy
 
-Everything lives under `~/.opensave/`:
+Everything lives under `~/.sidesave/`:
 
 | Path | What |
 |---|---|
-| `opensave.db` | SQLite store — tracked games, snapshots, pairings, settings |
+| `sidesave.db` | SQLite store — tracked games, snapshots, pairings, settings |
 | `snapshots/` | Versioned save snapshots |
-| `opensave.log` | Activity log for diagnostics |
-| `opensave-db.json` | Legacy JS database (kept as an import backup) |
+| `sidesave.log` | Activity log for diagnostics |
+| `sidesave-db.json` | Legacy JS database (kept as an import backup) |
 
 No accounts, no telemetry, no analytics. See [PRIVACY.md](PRIVACY.md) for the full statement.
 
@@ -432,10 +432,10 @@ No. Devices sync directly. The optional relay only matters for syncing across th
 Yes, to the relay — the connection is TLS, and the relay writes no save to disk. But that encryption ends at the relay rather than at your other device, so saves are not sealed end-to-end yet and a relay operator could read what passes through. LAN sync is direct and involves no relay; self-hosting the relay puts the whole WAN path under your control too.
 
 **What if two devices change the same save while offline?**
-OpenSave detects the divergence by sync lineage and asks you to keep yours, theirs, or both (on a new branch). It never silently overwrites.
+SideSave detects the divergence by sync lineage and asks you to keep yours, theirs, or both (on a new branch). It never silently overwrites.
 
 **Does it work with non-Steam or emulated games?**
-Yes. If it writes a save to disk, OpenSave can track it — Steam, emulators, GOG, Epic, and repacks are auto-detected; anything else you can add by path.
+Yes. If it writes a save to disk, SideSave can track it — Steam, emulators, GOG, Epic, and repacks are auto-detected; anything else you can add by path.
 
 **Can old (JS) and new (Go) versions talk to each other?**
 Yes, during the transition. They share the same wire protocol and your data migrates automatically.
@@ -448,7 +448,7 @@ Issues and pull requests are welcome. Please run `go test ./...` before opening 
 
 - [User Guide](USER_GUIDE.md) — first run, syncing, snapshots, cloud backup, troubleshooting
 - [Changelog](CHANGELOG.md) — release notes
-- [Privacy](PRIVACY.md) — what OpenSave does and doesn't do with your data
+- [Privacy](PRIVACY.md) — what SideSave does and doesn't do with your data
 
 ## License
 

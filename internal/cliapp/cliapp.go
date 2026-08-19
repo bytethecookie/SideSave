@@ -1,6 +1,6 @@
-// Package cliapp implements the opensave command-line interface: direct
+// Package cliapp implements the sidesave command-line interface: direct
 // offline operations against the local database, plus daemon start for
-// headless operation — porting bin/opensave.js.
+// headless operation — porting bin/sidesave.js.
 package cliapp
 
 import (
@@ -15,23 +15,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/opensave/opensave/internal/api"
-	"github.com/opensave/opensave/internal/daemon"
-	"github.com/opensave/opensave/internal/presets"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/sysintegration/upnp"
+	"github.com/bytethecookie/sidesave/internal/api"
+	"github.com/bytethecookie/sidesave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/presets"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/sysintegration/upnp"
 )
 
 // Run dispatches CLI arguments; returns a process exit code.
 func Run(args []string) int {
-	// Bare `opensave` shows what the system is doing right now. Someone
+	// Bare `sidesave` shows what the system is doing right now. Someone
 	// typing the command with no arguments wants to know whether it's
 	// working, not to read the manual — that's what --help is for.
 	if len(args) == 0 {
 		return cmdOverview(nil)
 	}
 
-	// `opensave --json` on its own means "the overview, machine-readable" —
+	// `sidesave --json` on its own means "the overview, machine-readable" —
 	// the flag is documented as working on every command, so it has to work
 	// on the default one too.
 	if len(args) == 1 && args[0] == "--json" {
@@ -116,7 +116,7 @@ func Run(args []string) int {
 
 	// Commands below run against a short-lived daemon of our own and write
 	// the database directly, so a daemon already running on this machine —
-	// the desktop app, or `opensave daemon start` — never hears about the
+	// the desktop app, or `sidesave daemon start` — never hears about the
 	// change. Its watch list is built at startup, so a game added here is
 	// tracked but watched by nobody: no auto-snapshots, no auto-sync, and no
 	// sign of it until the app is restarted. Anything that alters which games
@@ -205,14 +205,14 @@ func runDaemon(args []string) int {
 	// The bound port is persisted by api.Server.Start, so `--port` and the
 	// ephemeral fallback both advertise something peers can actually reach.
 
-	// Record the PID so `opensave daemon stop` can find *this* daemon. Only
+	// Record the PID so `sidesave daemon stop` can find *this* daemon. Only
 	// the CLI writes it: the desktop app serves the same API, and stopping it
 	// out from under its window would look like a crash.
 	pidPath := daemonPIDPath(d.Paths.HomeDir)
 	_ = os.WriteFile(pidPath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o666)
 	defer os.Remove(pidPath)
 
-	fmt.Printf("OpenSave daemon listening on http://%s\n", addr)
+	fmt.Printf("SideSave daemon listening on http://%s\n", addr)
 	fmt.Println("Press Ctrl+C to stop.")
 
 	sig := make(chan os.Signal, 1)
@@ -229,7 +229,7 @@ func daemonPIDPath(homeDir string) string {
 
 func cmdUpnp(args []string) int {
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: opensave upnp <port> [--delete]")
+		fmt.Fprintln(os.Stderr, "usage: sidesave upnp <port> [--delete]")
 		return 1
 	}
 	port := 0
@@ -276,7 +276,7 @@ func cmdScan(d *daemon.Daemon) int {
 	if len(found) == 0 {
 		section("Auto-scan")
 		note("No game saves detected.")
-		hint("opensave add <name> <path>     track a folder yourself")
+		hint("sidesave add <name> <path>     track a folder yourself")
 		fmt.Println()
 		return 0
 	}
@@ -292,15 +292,15 @@ func cmdScan(d *daemon.Daemon) int {
 		fmt.Printf("        %s\n", faint(f.SavePath))
 	}
 
-	// Persist what was shown so `opensave add <n>` means the entry the user is
+	// Persist what was shown so `sidesave add <n>` means the entry the user is
 	// looking at. Re-scanning to resolve the number would be simpler and
 	// wrong: the numbering has to survive a save appearing or disappearing
 	// between the two commands, and a path retyped by hand from a screen is
 	// the papercut this exists to remove.
 	saveScanResults(d.Paths.HomeDir, numbered)
 
-	hint("opensave add <number>          track one of these",
-		"opensave add <name> <path>     track something else")
+	hint("sidesave add <number>          track one of these",
+		"sidesave add <name> <path>     track something else")
 	fmt.Println()
 	return 0
 }
@@ -347,12 +347,12 @@ func cmdAdd(d *daemon.Daemon, args []string) int {
 	if len(args) == 1 {
 		n, err := strconv.Atoi(strings.TrimSpace(args[0]))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "usage: opensave add <name> <path>\n       opensave add <number>   (from the last `opensave scan`)")
+			fmt.Fprintln(os.Stderr, "usage: sidesave add <name> <path>\n       sidesave add <number>   (from the last `sidesave scan`)")
 			return 1
 		}
 		choices := loadScanResults(d.Paths.HomeDir)
 		if len(choices) == 0 {
-			fmt.Fprintln(os.Stderr, "error: no scan results to pick from — run `opensave scan` first")
+			fmt.Fprintln(os.Stderr, "error: no scan results to pick from — run `sidesave scan` first")
 			return 1
 		}
 		if n < 1 || n > len(choices) {
@@ -364,7 +364,7 @@ func cmdAdd(d *daemon.Daemon, args []string) int {
 	}
 
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave add <name> <path>\n       opensave add <number>   (from the last `opensave scan`)")
+		fmt.Fprintln(os.Stderr, "usage: sidesave add <name> <path>\n       sidesave add <number>   (from the last `sidesave scan`)")
 		return 1
 	}
 	return trackGame(d, args[0], args[1])
@@ -475,7 +475,7 @@ func cmdStatus(d *daemon.Daemon, args []string) int {
 	if len(games) == 0 {
 		section("Tracked games")
 		note("Nothing tracked yet.")
-		hint("opensave scan", "opensave add <name> <path>")
+		hint("sidesave scan", "sidesave add <name> <path>")
 		fmt.Println()
 		return 0
 	}
@@ -518,7 +518,7 @@ func cmdStatus(d *daemon.Daemon, args []string) int {
 
 func cmdSnapshot(d *daemon.Daemon, args []string) int {
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: opensave snapshot <gameId> [comment]")
+		fmt.Fprintln(os.Stderr, "usage: sidesave snapshot <gameId> [comment]")
 		return 1
 	}
 	comment := ""
@@ -538,7 +538,7 @@ func cmdSnapshot(d *daemon.Daemon, args []string) int {
 
 func cmdRollback(d *daemon.Daemon, args []string) int {
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave rollback <gameId> <snapshotId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave rollback <gameId> <snapshotId>")
 		return 1
 	}
 	snap, err := d.Snapshots.Restore(args[0], args[1])
@@ -565,7 +565,7 @@ func cmdBranch(d *daemon.Daemon, args []string) int {
 		rest = append(rest, a)
 	}
 	if len(rest) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave branch <gameId> <name> [--empty]\n\n"+
+		fmt.Fprintln(os.Stderr, "usage: sidesave branch <gameId> <name> [--empty]\n\n"+
 			"  Starts from your current save. --empty starts the branch with no\n"+
 			"  save, for a fresh run — switching to it clears the save folder\n"+
 			"  (your current save is snapshotted first).")
@@ -587,7 +587,7 @@ func cmdBranch(d *daemon.Daemon, args []string) int {
 
 func cmdCheckout(d *daemon.Daemon, args []string) int {
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave checkout <gameId> <name>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave checkout <gameId> <name>")
 		return 1
 	}
 	if err := d.Snapshots.SwitchBranch(args[0], args[1]); err != nil {
@@ -600,7 +600,7 @@ func cmdCheckout(d *daemon.Daemon, args []string) int {
 
 func cmdRemove(d *daemon.Daemon, args []string) int {
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: opensave remove <gameId>")
+		fmt.Fprintln(os.Stderr, "usage: sidesave remove <gameId>")
 		return 1
 	}
 	if err := d.UntrackGame(args[0]); err != nil {

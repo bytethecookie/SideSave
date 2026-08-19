@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
-	"github.com/opensave/opensave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
 )
 
 // setHome points every home-derived env var at dir so portable-path

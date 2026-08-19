@@ -9,7 +9,7 @@ import (
 )
 
 // cmdInstall copies this binary somewhere permanent and puts that directory
-// on the user's PATH, so `opensave` works from any new terminal.
+// on the user's PATH, so `sidesave` works from any new terminal.
 //
 // install.ps1 and install.sh already do this for people who pipe the
 // installer to a shell. The release also publishes the bare binary, though,
@@ -34,10 +34,10 @@ func cmdInstall(args []string) int {
 			dir = args[i+1]
 			i++
 		case "--help", "-h":
-			fmt.Println("Usage: opensave install [--dir <directory>]")
+			fmt.Println("Usage: sidesave install [--dir <directory>]")
 			fmt.Println()
 			fmt.Println("Copies this binary to a permanent location and adds it to your PATH,")
-			fmt.Println("so `opensave` works from any terminal.")
+			fmt.Println("so `sidesave` works from any terminal.")
 			fmt.Println()
 			fmt.Println("  --dir <directory>   install here instead of the default")
 			return 0
@@ -77,7 +77,7 @@ func cmdInstall(args []string) int {
 	}
 	dest := filepath.Join(dir, installedName)
 
-	// Running from the destination already (a re-run of `opensave install`,
+	// Running from the destination already (a re-run of `sidesave install`,
 	// or an installed copy): copying a file onto itself truncates it. Skip
 	// the copy and go straight to repairing PATH, which is the part that is
 	// actually worth re-running.
@@ -111,7 +111,7 @@ func cmdInstall(args []string) int {
 		fmt.Printf("%s was already on your PATH.\n", dir)
 	}
 	fmt.Println()
-	fmt.Println("Then: opensave scan")
+	fmt.Println("Then: sidesave scan")
 	return 0
 }
 
@@ -178,7 +178,7 @@ func pathEntries(path string) []string {
 
 // pathContains reports whether dir is already among a PATH value's entries.
 // Compares whole entries rather than substrings: a plain `strings.Contains`
-// matches "C:\tools\opensave" inside "C:\tools\opensave-old" and then skips
+// matches "C:\tools\sidesave" inside "C:\tools\sidesave-old" and then skips
 // an update the user needed.
 func pathContains(path, dir string) bool {
 	target := normalizePathEntry(dir)

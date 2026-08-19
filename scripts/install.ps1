@@ -1,9 +1,9 @@
-# OpenSave installer for Windows.
+# SideSave installer for Windows.
 #
-#   irm https://raw.githubusercontent.com/Liquid-co/OpenSave/main/scripts/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/bytethecookie/OpenSave/main/scripts/install.ps1 | iex
 #
-# Installs the CLI to %LOCALAPPDATA%\OpenSave\bin and puts it on your PATH, so
-# `opensave` works from any terminal. Installs as `opensave.exe` — the name the
+# Installs the CLI to %LOCALAPPDATA%\SideSave\bin and puts it on your PATH, so
+# `sidesave` works from any terminal. Installs as `sidesave.exe` — the name the
 # documentation and the tool's own help use.
 #
 # Override with:
@@ -15,9 +15,9 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Repo      = 'Liquid-co/OpenSave'
+$Repo      = 'bytethecookie/OpenSave'
 $InstallDir = if ($env:OPENSAVE_INSTALL_DIR) { $env:OPENSAVE_INSTALL_DIR }
-              else { Join-Path $env:LOCALAPPDATA 'OpenSave\bin' }
+              else { Join-Path $env:LOCALAPPDATA 'SideSave\bin' }
 $Version   = if ($env:OPENSAVE_VERSION) { $env:OPENSAVE_VERSION } else { 'latest' }
 
 function Fail($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
@@ -25,7 +25,7 @@ function Fail($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
 # ── Platform ─────────────────────────────────────────────────────────────
 
 if ([Environment]::Is64BitOperatingSystem -ne $true) {
-    Fail 'OpenSave requires 64-bit Windows.'
+    Fail 'SideSave requires 64-bit Windows.'
 }
 
 $base = if ($Version -eq 'latest') {
@@ -36,13 +36,13 @@ $base = if ($Version -eq 'latest') {
 
 # ── Download ─────────────────────────────────────────────────────────────
 
-$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("opensave-" + [guid]::NewGuid())
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("sidesave-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 try {
-    $asset   = 'opensave-cli.exe'
+    $asset   = 'sidesave-cli.exe'
     $target  = Join-Path $tmp $asset
 
-    Write-Host "==> Downloading OpenSave CLI ($Version)..."
+    Write-Host "==> Downloading SideSave CLI ($Version)..."
     try {
         Invoke-WebRequest -Uri "$base/$asset" -OutFile $target -UseBasicParsing
     } catch {
@@ -78,7 +78,7 @@ try {
     # ── Install ──────────────────────────────────────────────────────────
 
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-    $dest = Join-Path $InstallDir 'opensave.exe'
+    $dest = Join-Path $InstallDir 'sidesave.exe'
 
     # A running copy can't be overwritten; move it aside and let the next run
     # clean it up, which is how self-updating binaries handle this on Windows.
@@ -86,7 +86,7 @@ try {
         $old = "$dest.old"
         Remove-Item $old -Force -ErrorAction SilentlyContinue
         try { Move-Item $dest $old -Force } catch {
-            Fail "opensave.exe is running - close it and try again"
+            Fail "sidesave.exe is running - close it and try again"
         }
     }
     Copy-Item $target $dest -Force
@@ -94,9 +94,9 @@ try {
 
     # Short aliases. Shims rather than copies of a 15 MB binary, and rather
     # than symlinks, which need either admin rights or Developer Mode.
-    # `opensave-cli` is kept because the docs, the Deck plugin and the
+    # `sidesave-cli` is kept because the docs, the Deck plugin and the
     # packaging all refer to the tool by that name.
-    foreach ($alias in @('os', 'opensave-cli')) {
+    foreach ($alias in @('os', 'sidesave-cli')) {
         $shim = Join-Path $InstallDir "$alias.cmd"
         # Don't shadow an unrelated command that already answers to this name;
         # "os" is short enough to collide with something already installed.
@@ -106,7 +106,7 @@ try {
             continue
         }
         # %* forwards every argument; the exit code propagates on its own.
-        "@echo off`r`n`"%~dp0opensave.exe`" %*" | Set-Content -Path $shim -Encoding ASCII
+        "@echo off`r`n`"%~dp0sidesave.exe`" %*" | Set-Content -Path $shim -Encoding ASCII
         Write-Host "    $shim"
     }
 
@@ -125,7 +125,7 @@ try {
     $userPath = [string]$envKey.GetValue('Path', '', 'DoNotExpandEnvironmentNames')
 
     # Compare whole entries, not substrings: "*$InstallDir*" also matches an
-    # unrelated "...\OpenSave\bin-old" and would then skip an update that was
+    # unrelated "...\SideSave\bin-old" and would then skip an update that was
     # actually needed.
     $already = $false
     foreach ($entry in ($userPath -split ';')) {
@@ -165,11 +165,11 @@ try {
     & $dest
 
     Write-Host 'Next steps:'
-    Write-Host '  opensave scan            find your game saves'
-    Write-Host '  opensave daemon start    run the sync service'
-    Write-Host '  opensave --help          everything it can do'
+    Write-Host '  sidesave scan            find your game saves'
+    Write-Host '  sidesave daemon start    run the sync service'
+    Write-Host '  sidesave --help          everything it can do'
     Write-Host ''
-    Write-Host "'os' works as a short alias for 'opensave'."
+    Write-Host "'os' works as a short alias for 'sidesave'."
     Write-Host "The desktop app is a separate download: https://github.com/$Repo/releases/latest"
 }
 finally {

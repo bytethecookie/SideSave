@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensave/opensave/internal/config"
-	"github.com/opensave/opensave/internal/daemon"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/version"
+	"github.com/bytethecookie/sidesave/internal/config"
+	"github.com/bytethecookie/sidesave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/version"
 )
 
 // cmdDaemon dispatches the daemon sub-commands. `start` runs one in the
@@ -33,7 +33,7 @@ func cmdDaemon(args []string) int {
 	case "stop":
 		return cmdDaemonStop(args[1:])
 	default:
-		// Keeps `opensave daemon --port 9000` working as before.
+		// Keeps `sidesave daemon --port 9000` working as before.
 		return runDaemon(args)
 	}
 }
@@ -48,7 +48,7 @@ func cmdDaemonStatus(args []string) int {
 			return 1
 		}
 		fmt.Printf("Not running (nothing answering at %s).\n", base)
-		fmt.Println("Start it with `opensave daemon start`.")
+		fmt.Println("Start it with `sidesave daemon start`.")
 		return 1
 	}
 
@@ -72,7 +72,7 @@ func cmdDaemonStatus(args []string) int {
 		return emitRawJSON(raw)
 	}
 
-	section("OpenSave " + symDot() + " daemon")
+	section("SideSave " + symDot() + " daemon")
 	field("status", okText(sym("● running", "running")))
 	field("address", base)
 	field("device", st.Settings.DeviceName)
@@ -80,7 +80,7 @@ func cmdDaemonStatus(args []string) int {
 	field("peers", fmt.Sprintf("%d", st.PeerCount))
 	if st.ConflictCount > 0 {
 		field("conflicts", warnText(fmt.Sprintf("%d waiting on a decision", st.ConflictCount)))
-		hint("opensave conflicts")
+		hint("sidesave conflicts")
 	}
 	fmt.Println()
 	return 0
@@ -104,7 +104,7 @@ func cmdDaemonStop(args []string) int {
 		if daemonRunning() {
 			msg = "A daemon is running, but it wasn't started by this CLI — " +
 				"if that's the desktop app, quit it from the tray. " +
-				"If it's the systemd service, use `systemctl --user stop opensave-daemon`."
+				"If it's the systemd service, use `systemctl --user stop sidesave-daemon`."
 		}
 		if asJSON {
 			emitJSON(map[string]any{"stopped": false, "reason": msg})
@@ -156,13 +156,13 @@ func cmdVersion(args []string) int {
 			"arch":    runtime.GOARCH,
 		})
 	}
-	fmt.Printf("OpenSave %s (%s/%s)\n", version.Version, runtime.GOOS, runtime.GOARCH)
+	fmt.Printf("SideSave %s (%s/%s)\n", version.Version, runtime.GOOS, runtime.GOARCH)
 	return 0
 }
 
 // ── systemd service ──────────────────────────────────────────────────────
 
-const serviceUnitName = "opensave-daemon.service"
+const serviceUnitName = "sidesave-daemon.service"
 
 // cmdService installs the daemon as a systemd --user service, so syncing runs
 // without anyone logging into a desktop — the normal setup on a headless box
@@ -173,7 +173,7 @@ func cmdService(args []string) int {
 		return 1
 	}
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave service install|uninstall|status")
+		fmt.Fprintln(os.Stderr, "usage: sidesave service install|uninstall|status")
 		return 1
 	}
 
@@ -202,7 +202,7 @@ func cmdService(args []string) int {
 		fmt.Printf("Installed %s\n\n", unitPath)
 		fmt.Println("Enable it with:")
 		fmt.Println("  systemctl --user daemon-reload")
-		fmt.Println("  systemctl --user enable --now opensave-daemon")
+		fmt.Println("  systemctl --user enable --now sidesave-daemon")
 		fmt.Println()
 		fmt.Println("On SteamOS, also run `sudo loginctl enable-linger $USER` so it")
 		fmt.Println("keeps running across Game Mode / Desktop Mode switches.")
@@ -232,7 +232,7 @@ func cmdService(args []string) int {
 		return 0
 
 	default:
-		fmt.Fprintln(os.Stderr, "usage: opensave service install|uninstall|status")
+		fmt.Fprintln(os.Stderr, "usage: sidesave service install|uninstall|status")
 		return 1
 	}
 }
@@ -252,7 +252,7 @@ func userUnitDir() (string, error) {
 // came from a package, a tarball, or a Flatpak.
 func renderUnit(exePath string) string {
 	return `[Unit]
-Description=OpenSave save-sync daemon
+Description=SideSave save-sync daemon
 Documentation=https://github.com/Liquid-co/OpenSave
 After=network-online.target
 Wants=network-online.target
@@ -282,14 +282,14 @@ func unknownGameError(d *daemon.Daemon, gameID string, err error) error {
 	}
 	games, listErr := d.Store.ListGames()
 	if listErr != nil || len(games) == 0 {
-		return fmt.Errorf("no tracked game with id %q (nothing is tracked yet — try `opensave scan`)", gameID)
+		return fmt.Errorf("no tracked game with id %q (nothing is tracked yet — try `sidesave scan`)", gameID)
 	}
 	ids := make([]string, 0, len(games))
 	for _, g := range games {
 		ids = append(ids, g.ID)
 	}
 	if len(ids) > 8 {
-		return fmt.Errorf("no tracked game with id %q — run `opensave status` to list %d tracked games",
+		return fmt.Errorf("no tracked game with id %q — run `sidesave status` to list %d tracked games",
 			gameID, len(ids))
 	}
 	return fmt.Errorf("no tracked game with id %q — tracked ids: %s", gameID, strings.Join(ids, ", "))
@@ -301,7 +301,7 @@ func unknownGameError(d *daemon.Daemon, gameID string, err error) error {
 func cmdSnapshots(d *daemon.Daemon, args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: opensave snapshots <gameId> [--json]")
+		fmt.Fprintln(os.Stderr, "usage: sidesave snapshots <gameId> [--json]")
 		return 1
 	}
 	game, err := d.Store.GetGame(args[0])
@@ -339,7 +339,7 @@ func cmdSnapshots(d *daemon.Daemon, args []string) int {
 func cmdExport(d *daemon.Daemon, args []string) int {
 	asJSON, args := jsonFlag(args)
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: opensave export <gameId> <destination-dir> [--json]")
+		fmt.Fprintln(os.Stderr, "usage: sidesave export <gameId> <destination-dir> [--json]")
 		return 1
 	}
 	game, err := d.Store.GetGame(args[0])

@@ -4,7 +4,7 @@ Two devices on the same network find each other by themselves. On different
 networks — your PC at home and a laptop somewhere else — they need something
 with a public address to introduce them. That is the relay.
 
-OpenSave ships pointed at a free hosted one, so **you do not need this guide
+SideSave ships pointed at a free hosted one, so **you do not need this guide
 to use internet sync**. Run your own if you want to not depend on someone
 else's server, or want it to wake instantly instead of cold-starting.
 
@@ -17,7 +17,7 @@ else's server, or want it to wake instantly instead of cold-starting.
 This is the most common confusion, so it is worth being blunt about. The relay
 is a dumb pipe. It has no configuration beyond a port, no idea which room codes
 exist until clients turn up, and nothing to sign in to. There is no
-`opensave relay join` to run *on the relay* — that command belongs on your
+`sidesave relay join` to run *on the relay* — that command belongs on your
 **gaming devices**, and there is nothing to install on the server beyond the
 relay binary itself.
 
@@ -42,11 +42,11 @@ On a Linux server, one command does the lot — binary, systemd service,
 firewall, and a certificate if you have a domain pointed here:
 
 ```bash
-curl -fsSL https://opensave.org/relay.sh -o install-relay.sh
+curl -fsSL https://sidesave.org/relay.sh -o install-relay.sh
 sudo bash install-relay.sh --domain relay.example.com
 ```
 
-Leave `--domain` off and the relay speaks unencrypted `ws://`, which OpenSave
+Leave `--domain` off and the relay speaks unencrypted `ws://`, which SideSave
 accepts only at a private address — a LAN or a VPN. On a hosted server, whose
 only address is public, the installer will say so and print no address to copy,
 because anything it printed would be refused. See [Why `ws://` is not enough](#3-put-tls-in-front-of-it).
@@ -74,8 +74,8 @@ does not work.
 ### Docker
 
 ```bash
-docker build -f relay/Dockerfile -t opensave-relay .
-docker run -d --name opensave-relay --restart unless-stopped -p 8386:10000 opensave-relay
+docker build -f relay/Dockerfile -t sidesave-relay .
+docker run -d --name sidesave-relay --restart unless-stopped -p 8386:10000 sidesave-relay
 ```
 
 The image sets `PORT=10000` internally; the `-p` maps it to 8386 on the host.
@@ -84,8 +84,8 @@ Use whatever host port you like.
 ### Binary
 
 ```bash
-go build -o opensave-relay ./cmd/opensave-relay
-./opensave-relay
+go build -o sidesave-relay ./cmd/sidesave-relay
+./sidesave-relay
 ```
 
 It prints where it is listening and stays in the foreground. For a permanent
@@ -101,7 +101,7 @@ Both forms are configured with environment variables — there are no flags:
 | `MAX_PER_ROOM` | `20` | Most devices allowed in one room |
 | `GOOGLE_DRIVE_CLIENT_SECRET` | unset | Only for the optional OAuth token proxy. Leave it alone unless you know you need it |
 
-`opensave-relay --help` prints the same list. It takes **no commands** — if you
+`sidesave-relay --help` prints the same list. It takes **no commands** — if you
 give it one it says so and exits rather than starting a server that ignored
 half its command line. In particular `relay-url` is a *client* setting and does
 nothing here; see step 4.
@@ -119,7 +119,7 @@ when devices connect.
 
 ## 3. Put TLS in front of it
 
-Not optional across the internet, and the app enforces it. Nothing in OpenSave
+Not optional across the internet, and the app enforces it. Nothing in SideSave
 encrypts the sync payload — the save file travels gzipped inside JSON — so the
 relay connection is the only thing between a save and the network it crosses.
 A bare relay speaks plain `ws://`, and the app refuses that to any public
@@ -163,7 +163,7 @@ a certificate rather than an open port.
 ## 3b. Google Drive sign-in (optional)
 
 Only relevant if the people using this relay sign in to Google Drive with
-OpenSave's built-in credentials. Sync itself needs none of this, and neither
+SideSave's built-in credentials. Sync itself needs none of this, and neither
 does anyone who enters their own OAuth client ID and secret in the app — that
 path talks to Google directly and never touches the relay.
 
@@ -175,7 +175,7 @@ and point the installer at it:
 sudo bash install-relay.sh --domain relay.example.com --google-secret-file /root/gd-secret.txt
 ```
 
-It is copied to `/etc/opensave-relay/env`, mode `0600`, root-owned, and the
+It is copied to `/etc/sidesave-relay/env`, mode `0600`, root-owned, and the
 service unit loads it with `EnvironmentFile=`. Two things that are deliberate:
 
 - **A file, not an argument.** `--google-client-secret <value>` would be
@@ -203,9 +203,9 @@ paste the one you are already using.
 From the command line:
 
 ```bash
-opensave config set relay-url wss://relay.example.com
-opensave relay join purple-otter-42     # the same code on every device
-opensave relay status                   # shows the room and the relay in use
+sidesave config set relay-url wss://relay.example.com
+sidesave relay join purple-otter-42     # the same code on every device
+sidesave relay status                   # shows the room and the relay in use
 ```
 
 Provisioning devices rather than configuring them by hand? Set
@@ -214,7 +214,7 @@ overrides the stored value for as long as it is set, so a container gets the
 right relay without anyone running a command inside it:
 
 ```bash
-OPENSAVE_RELAY_URL=wss://relay.example.com opensave daemon start
+OPENSAVE_RELAY_URL=wss://relay.example.com sidesave daemon start
 ```
 
 Note the prefix: it is `OPENSAVE_RELAY_URL`, not a bare `RELAY_URL`, so it
@@ -229,14 +229,14 @@ sync anything without you approving the pairing on the device itself.
 To check they have met:
 
 ```bash
-opensave peers
+sidesave peers
 ```
 
-To stop using internet sync on a device: `opensave relay leave`.
+To stop using internet sync on a device: `sidesave relay leave`.
 
 ## If it does not connect
 
-**`opensave relay status` shows the room but no peers appear.** Check the other
+**`sidesave relay status` shows the room but no peers appear.** Check the other
 device has the *same* code and the *same* relay URL — a typo in either produces
 exactly this, silently. `curl .../health` on both machines proves they can
 reach the server at all.

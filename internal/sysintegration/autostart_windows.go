@@ -12,9 +12,9 @@ import (
 )
 
 const runKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
-const runValueName = "OpenSave"
+const runValueName = "SideSave"
 
-// SetAutostart registers or removes OpenSave in the current user's Run
+// SetAutostart registers or removes SideSave in the current user's Run
 // key (no admin rights needed).
 func SetAutostart(enabled bool) error {
 	key, err := registry.OpenKey(registry.CURRENT_USER, runKeyPath, registry.SET_VALUE)

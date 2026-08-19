@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/opensave/opensave/internal/daemon"
+	"github.com/bytethecookie/sidesave/internal/daemon"
 )
 
 // Pairing tells the other device to call back on settings.Port, and that

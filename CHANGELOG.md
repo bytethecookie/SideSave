@@ -3,6 +3,44 @@
 All notable changes to OpenSave are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+Everything above this point is from before the fork — see below.
+
+## SideSave fork
+
+SideSave is a fork of OpenSave, narrowed to one job: syncing save data for
+games added to Steam as a non-Steam shortcut, which Steam Cloud doesn't
+cover. Renamed throughout (module path, binaries, Flatpak app-id, Decky
+plugin, `~/.opensave` → `~/.sidesave` with an automatic one-time migration).
+
+## [2.2.2-sidesave] — 2026-08-19
+
+### Added
+
+- Non-Steam shortcuts are now identified by reading Steam's own
+  `shortcuts.vdf` directly — no more guessed names like "GSE Saves" or "SB".
+- Cover art for non-Steam shortcuts is read from Steam's own local grid
+  folder instead of only ever asking the Steam Store CDN (which has never
+  heard of a shortcut's locally-computed id).
+- A game's AppID (and the cover art keyed off it) now follows its save path
+  when relinked, instead of silently keeping whatever id a peer's sync last
+  set it to.
+- Peer-placeholder detection: tracking a game whose name already matches a
+  save synced here from a peer (but never independently found locally)
+  points you at relinking it instead of silently creating a disconnected
+  duplicate.
+
+### Changed
+
+- Scan now surfaces only non-Steam shortcuts — real Steam-Cloud games,
+  emulator presets, repack wrapper folders, portable installs, and the
+  Ludusavi community-manifest matcher are gone; Steam Cloud already covers
+  the case those existed for.
+- The in-app update-check banner is disabled — it would otherwise offer to
+  replace this fork's binaries with a stock OpenSave release.
+- Fixed a scan-deduplication bug where `~/.steam/steam` (a symlink to
+  `~/.local/share/Steam` on Linux) and its target were treated as two
+  separate libraries, doubling every result.
+
 ## [2.2.2] — 2026-08-12
 
 An emergency release with one purpose: the public relay was suspended for

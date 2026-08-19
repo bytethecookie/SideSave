@@ -35,17 +35,17 @@ import (
 var cliBin string
 
 func TestMain(m *testing.M) {
-	dir, err := os.MkdirTemp("", "opensave-cli-e2e-*")
+	dir, err := os.MkdirTemp("", "sidesave-cli-e2e-*")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cli e2e: temp dir: %v\n", err)
 		os.Exit(1)
 	}
-	cliBin = filepath.Join(dir, "opensave")
+	cliBin = filepath.Join(dir, "sidesave")
 	if runtime.GOOS == "windows" {
 		cliBin += ".exe"
 	}
 
-	build := exec.Command("go", "build", "-o", cliBin, "./cmd/opensave-cli")
+	build := exec.Command("go", "build", "-o", cliBin, "./cmd/sidesave-cli")
 	build.Dir = repoRoot()
 	if out, err := build.CombinedOutput(); err != nil {
 		fmt.Fprintf(os.Stderr, "cli e2e: building the CLI failed: %v\n%s\n", err, out)
@@ -75,7 +75,7 @@ func repoRoot() string {
 
 // cli is one isolated CLI environment: its own home directory, database and
 // daemon, so tests cannot see each other's games or settings — and cannot
-// touch the real OpenSave install on the machine running them.
+// touch the real SideSave install on the machine running them.
 type cli struct {
 	t    *testing.T
 	home string
@@ -90,7 +90,7 @@ func newCLI(t *testing.T) *cli {
 	// Not t.TempDir(): the daemon holds the SQLite file open, and on Windows
 	// t.TempDir's cleanup fails the test when a handle is still live. This
 	// cleans up best-effort after the daemon has been asked to stop.
-	home, err := os.MkdirTemp("", "opensave-home-*")
+	home, err := os.MkdirTemp("", "sidesave-home-*")
 	if err != nil {
 		t.Fatalf("temp home: %v", err)
 	}
@@ -150,7 +150,7 @@ func (c *cli) mustRun(args ...string) string {
 	c.t.Helper()
 	out, code := c.run(args...)
 	if code != 0 {
-		c.t.Fatalf("`opensave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
+		c.t.Fatalf("`sidesave %s` exited %d:\n%s", strings.Join(args, " "), code, out)
 	}
 	return out
 }
@@ -161,7 +161,7 @@ func (c *cli) mustFail(args ...string) string {
 	c.t.Helper()
 	out, code := c.run(args...)
 	if code == 0 {
-		c.t.Errorf("`opensave %s` exited 0, expected a non-zero status:\n%s",
+		c.t.Errorf("`sidesave %s` exited 0, expected a non-zero status:\n%s",
 			strings.Join(args, " "), out)
 	}
 	return out
@@ -182,7 +182,7 @@ func (c *cli) startDaemon() {
 	}
 	c.daemon = cmd
 
-	addrFile := filepath.Join(c.home, ".opensave", "daemon.addr")
+	addrFile := filepath.Join(c.home, ".sidesave", "daemon.addr")
 	deadline := time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		if raw, err := os.ReadFile(addrFile); err == nil && strings.TrimSpace(string(raw)) != "" {
@@ -240,7 +240,7 @@ func (c *cli) readSave(dir, rel string) string {
 	return string(raw)
 }
 
-// snapshotIDs pulls snapshot ids out of `opensave snapshots` output. They are
+// snapshotIDs pulls snapshot ids out of `sidesave snapshots` output. They are
 // the only snap_-prefixed tokens printed, so this stays readable rather than
 // threading --json through every history assertion.
 func (c *cli) snapshotIDs(gameID string) []string {
@@ -269,7 +269,7 @@ func (c *cli) mustJSON(out any, args ...string) {
 	c.t.Helper()
 	raw := c.mustRun(args...)
 	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), out); err != nil {
-		c.t.Fatalf("`opensave %s` did not emit decodable JSON: %v\n%s",
+		c.t.Fatalf("`sidesave %s` did not emit decodable JSON: %v\n%s",
 			strings.Join(args, " "), err, raw)
 	}
 }

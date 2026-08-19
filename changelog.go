@@ -1,8 +1,8 @@
-// Package opensave exposes repo-root assets that need to ship inside the
+// Package sidesave exposes repo-root assets that need to ship inside the
 // binary. go:embed can't reach parent directories, so the canonical
 // CHANGELOG.md living at the repo root (where GitHub expects it) is
 // embedded from this root-level package.
-package opensave
+package sidesave
 
 import _ "embed"
 

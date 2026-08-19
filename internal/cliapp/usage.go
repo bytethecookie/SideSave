@@ -95,7 +95,7 @@ var commandGroups = []commandGroup{
 // printUsage renders the reference using the same styling as everything else.
 func printUsage() {
 	fmt.Println()
-	fmt.Printf("  %s   %s\n", heading("OpenSave"), faint("peer-to-peer game save sync"))
+	fmt.Printf("  %s   %s\n", heading("SideSave"), faint("peer-to-peer game save sync"))
 	fmt.Printf("  %s\n", faint("No account, no server, no quota. Devices sync directly with each other."))
 
 	// Width the command column to the longest entry so descriptions line up

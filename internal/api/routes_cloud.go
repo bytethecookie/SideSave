@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/opensave/opensave/internal/cloud"
-	"github.com/opensave/opensave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/cloud"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
 )
 
 // pendingPKCE holds verifier state between /api/auth/start and

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 // instrumentedTransport wraps the fake peer to observe how the engine drives

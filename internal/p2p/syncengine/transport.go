@@ -3,7 +3,7 @@ package syncengine
 import (
 	"context"
 
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 // Peer identifies a sync counterpart. Address "relay" (or IsWan) means the

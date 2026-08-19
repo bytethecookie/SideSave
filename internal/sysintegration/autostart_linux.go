@@ -11,7 +11,7 @@ import (
 // desktopEntry mirrors the .desktop file the Electron app wrote.
 const desktopEntry = `[Desktop Entry]
 Type=Application
-Name=OpenSave
+Name=SideSave
 Comment=P2P game save sync
 Exec=%s
 Terminal=false
@@ -23,10 +23,10 @@ func autostartFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "autostart", "opensave.desktop"), nil
+	return filepath.Join(home, ".config", "autostart", "sidesave.desktop"), nil
 }
 
-// SetAutostart writes or removes ~/.config/autostart/opensave.desktop.
+// SetAutostart writes or removes ~/.config/autostart/sidesave.desktop.
 func SetAutostart(enabled bool) error {
 	path, err := autostartFilePath()
 	if err != nil {
@@ -39,7 +39,7 @@ func SetAutostart(enabled bool) error {
 		return nil
 	}
 
-	// Inside a Flatpak sandbox os.Executable() is /app/bin/opensave, a path
+	// Inside a Flatpak sandbox os.Executable() is /app/bin/sidesave, a path
 	// that doesn't exist on the host session that runs autostart entries —
 	// launch through flatpak instead.
 	launch := ""

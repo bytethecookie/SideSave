@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/opensave/opensave/internal/delta"
+	"github.com/bytethecookie/sidesave/internal/delta"
 )
 
 func manifest(latestMtime int64, files map[string]delta.FileEntry, dirs ...string) delta.Manifest {
@@ -236,7 +236,7 @@ func TestIntersectLineage_UnconfirmedPushNeverEntersLineage(t *testing.T) {
 	local := delta.Manifest{
 		Files: map[string]delta.FileEntry{
 			"shared.sav":   {Hash: "h1"},
-			"OpenSave.exe": {Hash: "h2"}, // pushed, peer's pull failed
+			"SideSave.exe": {Hash: "h2"}, // pushed, peer's pull failed
 		},
 		Dirs: []string{"common", "local-only"},
 	}
@@ -261,8 +261,8 @@ func TestIntersectLineage_UnconfirmedPushNeverEntersLineage(t *testing.T) {
 	if len(d.FilesToDeleteLocally) != 0 {
 		t.Fatalf("pushed-but-unreceived file must never be deleted locally, got %v", d.FilesToDeleteLocally)
 	}
-	if len(d.FilesToPush) != 1 || d.FilesToPush[0] != "OpenSave.exe" {
-		t.Fatalf("expected OpenSave.exe re-push, got %v", d.FilesToPush)
+	if len(d.FilesToPush) != 1 || d.FilesToPush[0] != "SideSave.exe" {
+		t.Fatalf("expected SideSave.exe re-push, got %v", d.FilesToPush)
 	}
 }
 

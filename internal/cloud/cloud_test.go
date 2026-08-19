@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 func newTestService(t *testing.T) (*Service, *store.Store) {
 	t.Helper()
-	s, err := store.Open(filepath.Join(t.TempDir(), "opensave.db"))
+	s, err := store.Open(filepath.Join(t.TempDir(), "sidesave.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -367,7 +367,7 @@ func TestDropboxProvider(t *testing.T) {
 		case "/2/files/upload":
 			var args map[string]any
 			_ = json.Unmarshal([]byte(r.Header.Get("Dropbox-API-Arg")), &args)
-			if args["path"] != "/OpenSave/game__main__snap_7.zip" {
+			if args["path"] != "/SideSave/game__main__snap_7.zip" {
 				t.Errorf("upload path = %v", args["path"])
 			}
 			fmt.Fprint(w, `{}`)

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/opensave/opensave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store"
 )
 
 // isIDCollision decides whether claimAndInsert walks forward to the next

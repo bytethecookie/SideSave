@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opensave/opensave/testutil"
+	"github.com/bytethecookie/sidesave/testutil"
 )
 
 // The reported failure this feature exists for: the same game tracked under
@@ -222,7 +222,7 @@ func TestBackup_ExportImportRoundTrip(t *testing.T) {
 	}
 	a.API(http.MethodPost, "/api/games/"+gameID+"/snapshot", map[string]string{"comment": "pre-export"}, nil)
 
-	target := filepath.Join(testutil.TempDir(t), "opensave-backup")
+	target := filepath.Join(testutil.TempDir(t), "sidesave-backup")
 	var exportResp struct {
 		Path  string `json:"path"`
 		Count int    `json:"count"`

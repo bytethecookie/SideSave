@@ -1,4 +1,4 @@
-// Package daemon wires OpenSave's subsystems together: storage (with
+// Package daemon wires SideSave's subsystems together: storage (with
 // legacy import on first launch), the snapshot manager, the file watcher,
 // and the local REST/WebSocket API. P2P and cloud attach here in later
 // phases.
@@ -14,20 +14,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opensave/opensave/internal/cloud"
-	"github.com/opensave/opensave/internal/config"
-	"github.com/opensave/opensave/internal/logging"
-	"github.com/opensave/opensave/internal/p2p"
-	"github.com/opensave/opensave/internal/presets"
-	"github.com/opensave/opensave/internal/snapshot"
-	"github.com/opensave/opensave/internal/store"
-	"github.com/opensave/opensave/internal/store/legacyimport"
-	"github.com/opensave/opensave/internal/watcher"
+	"github.com/bytethecookie/sidesave/internal/cloud"
+	"github.com/bytethecookie/sidesave/internal/config"
+	"github.com/bytethecookie/sidesave/internal/logging"
+	"github.com/bytethecookie/sidesave/internal/p2p"
+	"github.com/bytethecookie/sidesave/internal/presets"
+	"github.com/bytethecookie/sidesave/internal/snapshot"
+	"github.com/bytethecookie/sidesave/internal/store"
+	"github.com/bytethecookie/sidesave/internal/store/legacyimport"
+	"github.com/bytethecookie/sidesave/internal/watcher"
 )
 
 // Options tune daemon construction; the zero value is production behavior.
 type Options struct {
-	// HomeOverride uses a custom data directory instead of ~/.opensave
+	// HomeOverride uses a custom data directory instead of ~/.sidesave
 	// (tests and portable installs).
 	HomeOverride string
 	// DisableDiscovery skips UDP LAN discovery (tests pair peers manually
@@ -60,7 +60,7 @@ type Daemon struct {
 
 	// initialSnapshots counts the first-snapshot goroutines TrackGame starts.
 	// They run in the background so the API can answer immediately, which is
-	// right for the desktop app and wrong for the CLI: `opensave add` returns
+	// right for the desktop app and wrong for the CLI: `sidesave add` returns
 	// and the process exits, taking the unfinished snapshot with it. The game
 	// ended up tracked with no history at all, and nothing said so — the one
 	// snapshot you would most want is the state before you started playing.
@@ -86,7 +86,7 @@ func New(opts Options) (*Daemon, error) {
 	// that never reach the dashboard (boot problems, unreachable API) stay
 	// diagnosable — the dashboard only exists once boot succeeds.
 	log := logging.New()
-	log.AttachFile(filepath.Join(paths.HomeDir, "opensave.log"))
+	log.AttachFile(filepath.Join(paths.HomeDir, "sidesave.log"))
 	log.Log("info", "daemon starting (data dir: "+paths.HomeDir+")")
 	fail := func(err error) (*Daemon, error) {
 		log.Log("error", "daemon boot failed: "+err.Error())
@@ -131,7 +131,7 @@ func New(opts Options) (*Daemon, error) {
 	// background; failures are logged, never fatal.
 	snaps.OnUpload = func(zipPath, remoteFileName string) {
 		// Tracked so Stop can wait for it. In a short-lived process —
-		// `opensave snapshot`, or the automatic backup taken by rollback and
+		// `sidesave snapshot`, or the automatic backup taken by rollback and
 		// checkout — the process would otherwise exit before the copy
 		// finishes. The destination file has already been created and
 		// truncated by then, so what is left in the cloud is a zero-byte
@@ -355,7 +355,7 @@ func (d *Daemon) runCloudUpload(zipPath, remoteFileName string, log *logging.Log
 //
 // It exists because the CLI does not talk to a running daemon: every command
 // opens its own short-lived daemon and writes the database directly. A game
-// added with `opensave add` while the desktop app (or a `daemon start`) is
+// added with `sidesave add` while the desktop app (or a `daemon start`) is
 // running therefore appears in the database but is watched by nobody — no
 // auto-snapshots, no auto-sync — until the long-running process is restarted,
 // and nothing on screen says so. The CLI asks for this afterwards so the
@@ -446,7 +446,7 @@ func (d *Daemon) TrackGame(game store.Game) (store.Game, error) {
 			return store.Game{}, fmt.Errorf(
 				"%q was already synced here from a peer, tracked as %q at %q — likely this same game, "+
 					"just not installed here yet when it synced. Point it at the real location instead of "+
-					"tracking a duplicate:\n  opensave game %s set path %q",
+					"tracking a duplicate:\n  sidesave game %s set path %q",
 				game.Name, ph.ID, ph.SavePath, ph.ID, abs)
 		}
 		base := store.SlugifyGameID(game.Name)
@@ -502,7 +502,7 @@ func (d *Daemon) TrackGame(game store.Game) (store.Game, error) {
 	// upload, no zombie work for a game that no longer exists.
 	//
 	// Counted so Stop can wait for it: the CLI's daemon lives only as long as
-	// the command, and without the wait `opensave add` returned before the
+	// the command, and without the wait `sidesave add` returned before the
 	// snapshot was written and the process took it with it.
 	d.initialSnapshots.Add(1)
 	go func() {
@@ -545,7 +545,7 @@ func (d *Daemon) TrackGame(game store.Game) (store.Game, error) {
 
 // validateSavePath rejects save locations that can never be right: paths
 // that don't exist, whole-profile/system directories, drive roots,
-// OpenSave's own data directory, and paths another game already tracks.
+// SideSave's own data directory, and paths another game already tracks.
 // ValidateSavePath is exported so the CLI applies exactly the same checks the
 // app does when a save location is set or moved.
 func (d *Daemon) ValidateSavePath(rawPath string) (string, error) {
@@ -581,7 +581,7 @@ func (d *Daemon) ValidateSavePath(rawPath string) (string, error) {
 
 // CheckRestoreTarget validates a path files are about to be restored into
 // (backup import onto a possibly-fresh machine): same shape rules as
-// tracking — no drive roots, profile/system folders, or OpenSave's own
+// tracking — no drive roots, profile/system folders, or SideSave's own
 // data dir — but the path is allowed to not exist yet.
 func (d *Daemon) CheckRestoreTarget(rawPath string) (string, error) {
 	if strings.TrimSpace(rawPath) == "" {
@@ -639,11 +639,11 @@ func (d *Daemon) checkSavePathShape(abs string) error {
 		}
 	}
 
-	// Never OpenSave's own data dir (snapshotting the backups folder would
+	// Never SideSave's own data dir (snapshotting the backups folder would
 	// recurse forever).
 	dataDir := strings.ToLower(filepath.Clean(d.Paths.HomeDir))
 	if norm == dataDir || strings.HasPrefix(norm, dataDir+sep) || strings.HasPrefix(dataDir, norm+sep) {
-		return fmt.Errorf("refusing to use OpenSave's own data folder (%s)", abs)
+		return fmt.Errorf("refusing to use SideSave's own data folder (%s)", abs)
 	}
 	return nil
 }

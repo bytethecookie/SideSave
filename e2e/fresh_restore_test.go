@@ -3,7 +3,7 @@ package e2e
 // Restoring a backup onto a machine that has never seen these games — the
 // reason the format exists, and the one moment it has to work.
 //
-// It did not. `opensave backup export` with no ids sent no game list, and the
+// It did not. `sidesave backup export` with no ids sent no game list, and the
 // endpoint falls back to a snapshot-library archive that records only
 // snapshot files: no names, no save locations. Restoring one onto a fresh
 // install matched nothing, skipped every entry, and reported success. The

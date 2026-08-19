@@ -13,16 +13,16 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-const installedName = "opensave.exe"
+const installedName = "sidesave.exe"
 
-const pathActivationHint = "Open a new PowerShell window and run `opensave`."
+const pathActivationHint = "Open a new PowerShell window and run `sidesave`."
 
 func defaultInstallDir() (string, error) {
 	local := os.Getenv("LOCALAPPDATA")
 	if local == "" {
 		return "", fmt.Errorf("LOCALAPPDATA is not set — pass --dir to choose a location")
 	}
-	return filepath.Join(local, "OpenSave", "bin"), nil
+	return filepath.Join(local, "SideSave", "bin"), nil
 }
 
 // normalizePathEntry makes two spellings of the same directory compare equal:
@@ -31,12 +31,12 @@ func normalizePathEntry(p string) string {
 	return strings.ToLower(strings.TrimRight(strings.TrimSpace(p), `\/`))
 }
 
-// writeAliases drops `os` and `opensave-cli` next to the binary as .cmd
+// writeAliases drops `os` and `sidesave-cli` next to the binary as .cmd
 // shims. Shims rather than copies of a 15 MB binary, and rather than
 // symlinks, which need admin rights or Developer Mode.
 func writeAliases(dir string) []string {
 	var out []string
-	for _, alias := range []string{"os", "opensave-cli"} {
+	for _, alias := range []string{"os", "sidesave-cli"} {
 		shim := filepath.Join(dir, alias+".cmd")
 		body := "@echo off\r\n\"%~dp0" + installedName + "\" %*\r\n"
 		if err := os.WriteFile(shim, []byte(body), 0o755); err == nil {
@@ -107,7 +107,7 @@ func ensureOnPath(dir string) (bool, error) {
 
 	broadcastEnvironmentChange()
 
-	// Also update this process, so a `opensave` invoked from the very shell
+	// Also update this process, so a `sidesave` invoked from the very shell
 	// that ran the install resolves without reopening it.
 	_ = os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+dir)
 	return true, nil

@@ -1,12 +1,12 @@
 # Privacy
 
-OpenSave is designed to be private by default. It is a self-contained tool
+SideSave is designed to be private by default. It is a self-contained tool
 that runs entirely on your own devices.
 
-## What OpenSave does not do
+## What SideSave does not do
 
 - **No accounts.** There is no sign-up, login, or user profile.
-- **No telemetry.** OpenSave does not collect analytics, usage data, or crash
+- **No telemetry.** SideSave does not collect analytics, usage data, or crash
   reports, and never phones home with anything about you. It does make a few
   functional network requests (an update check, and looking up game names and
   cover art while scanning) — these are listed in full under *Outbound network
@@ -27,13 +27,13 @@ that runs entirely on your own devices.
   The connection to it is encrypted, but that encryption ends at the relay
   rather than at your other device: save data is not sealed end-to-end yet, so
   whoever operates a relay is in a position to read what passes through it.
-  Ours is `wss://relay.opensave.org`, running on hardware the project rents.
+  Ours is `wss://relay.sidesave.org`, running on hardware the project rents.
   If you would rather not take our word for how it behaves, self-hosting one is
   a single command, and LAN sync never involves a relay at all.
 
 ## Outbound network requests
 
-Beyond peer-to-peer sync and any Cloud Backup you enable, OpenSave makes a
+Beyond peer-to-peer sync and any Cloud Backup you enable, SideSave makes a
 small number of functional requests. None of them include an account, your
 name, or the contents of your saves. Some do send a game's Steam **App ID**,
 which identifies the *game* (not you) so its name or cover art can be looked
@@ -48,7 +48,7 @@ up:
   Sends nothing about you.
 - **Cover art** — fetched from Steam's image CDN by App ID and then cached on
   your device. If your network blocks Steam directly (some campus or office
-  networks do), OpenSave automatically retries through a public image proxy,
+  networks do), SideSave automatically retries through a public image proxy,
   [images.weserv.nl](https://images.weserv.nl), which fetches the same public
   cover image on your behalf — so the App ID is visible to that proxy in that
   case. Cover art is not your save data.
@@ -61,7 +61,7 @@ in the background, and results are cached so they aren't repeated.
 If you turn on Cloud Backup, snapshots are uploaded to the provider you choose
 (Google Drive, Dropbox, OneDrive, WebDAV, a webhook, or a local/NAS folder)
 using credentials you authorize. OAuth tokens are stored locally on your
-device and are never sent to the OpenSave project. Disconnecting a provider
+device and are never sent to the SideSave project. Disconnecting a provider
 removes its stored tokens.
 
 ## Pairing & trust

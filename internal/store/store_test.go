@@ -9,7 +9,7 @@ import (
 
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
-	dbPath := filepath.Join(t.TempDir(), "opensave.db")
+	dbPath := filepath.Join(t.TempDir(), "sidesave.db")
 	s, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)
