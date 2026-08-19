@@ -38,6 +38,8 @@ var protonVendorSkip = map[string]bool{
 	"criware": true, "unity": true, "unitycrashhandler": true,
 	"easyanticheat": true, "battleye": true, "steam": true, "valve": true,
 	"epicgameslauncher": true, "goginstaller": true,
+	// Shader/translation-layer caches — regenerated locally, never save data.
+	"dxvk": true, "dxvk-cache": true, "vkd3d": true, "mesa_shader_cache": true,
 	// AppData/Local/UnrealEngine (note: NOT <game>/Saved, which is handled
 	// separately below) is the engine's own crash-reporter/analytics cache,
 	// shared across every UE game in the prefix — never one game's save.
