@@ -359,6 +359,7 @@ func (s *Server) gamePayload(g store.Game) map[string]any {
 		"coverUrl":           g.CoverURL,
 		"branches":           branches,
 		"createdAt":          g.CreatedAt,
+		"peerPlaceholder":    g.PeerPlaceholder,
 	}
 }
 

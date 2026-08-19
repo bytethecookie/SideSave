@@ -130,6 +130,17 @@
   const normPath = (p) => (p ?? '').replace(/[\\/]+$/, '').toLowerCase();
   $: trackedPaths = new Set($gameList.map((g) => normPath(g.savePath)));
   const isTracked = (r) => trackedPaths.has(normPath(r.savePath));
+
+  // A game synced here from a peer before this device had it installed is
+  // tracked at a placeholder path — a non-Steam shortcut's AppID is a CRC of
+  // its own exe path, so it means nothing on another device, and the
+  // placeholder just inherited the peer's. A scan result with the same name
+  // at a *different* path is very likely that game's real local install;
+  // offer to relink instead of letting it silently become a duplicate.
+  const normName = (n) => (n ?? '').trim().toLowerCase();
+  $: placeholders = $gameList.filter((g) => g.peerPlaceholder);
+  const placeholderMatch = (r) =>
+    placeholders.find((g) => normName(g.name) === normName(r.name) && normPath(g.savePath) !== normPath(r.savePath));
   // Note: reference trackedPaths directly (not via isTracked) so Svelte sees
   // it as a dependency and refreshes the list when tracked-state changes.
   $: filteredResults = (scanResults ?? []).filter((r) => {
@@ -172,6 +183,23 @@
       selected.delete(item.id);
       selectedCount = selected.size;
       if (!keepOpen) toast(`Now tracking "${item.name}"`, 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  // A peer-synced placeholder's AppID means nothing on this device (it's a
+  // CRC of the peer's own exe path), so it can't be matched by id — only by
+  // name. Point the placeholder's existing game record at this newly-found
+  // real path via the same PATCH route the Configuration tab's path field
+  // uses, instead of tracking a second, disconnected copy.
+  async function relinkPlaceholder(item, placeholder) {
+    try {
+      await api.patch(`/api/games/${placeholder.id}`, { savePath: item.savePath });
+      if (scanResults && !showTracked) scanResults = scanResults.filter((r) => r.id !== item.id);
+      selected.delete(item.id);
+      selectedCount = selected.size;
+      toast(`Relinked "${placeholder.name}" to its real save location`, 'success');
     } catch (e) {
       toast(e.message, 'error');
     }
@@ -320,6 +348,7 @@
         <div class="scan-modal-list">
           <div class="scan-grid">
             {#each orderedResults as item, i (item.id)}
+              {@const relink = isTracked(item) ? null : placeholderMatch(item)}
               {#if i === availableResults.length && trackedResults.length > 0}
                 <div class="scan-divider">
                   Already tracked ({trackedResults.length})
@@ -355,6 +384,19 @@
 
                   {#if isTracked(item)}
                     <span class="cover-tracked">✓ Tracked</span>
+                  {:else if relink}
+                    <span class="cover-relink" title="Already tracked as {relink.name} at a placeholder path from a peer sync — this is likely the real location">↻ Relink available</span>
+                    <div class="cover-hover">
+                      <button class="btn small primary" on:click|stopPropagation={() => relinkPlaceholder(item, relink)}>Relink to {relink.name}</button>
+                      <button
+                        class="btn small"
+                        disabled={excluding === item.id}
+                        title="Stop offering this location in future scans"
+                        on:click|stopPropagation={() => excludeResult(item)}
+                      >
+                        {excluding === item.id ? 'Excluding…' : 'Exclude'}
+                      </button>
+                    </div>
                   {:else}
                     <div class="cover-hover">
                       <button class="btn small primary" on:click|stopPropagation={() => trackDetected(item)}>Track</button>
@@ -761,6 +803,18 @@
     font-weight: 700;
     background: var(--accent);
     color: #fff;
+  }
+  .cover-relink {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    z-index: 3;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: var(--warn);
+    color: #1a1400;
   }
   /* Full-width heading separating the already-tracked group from the saves
      you can still add. */
