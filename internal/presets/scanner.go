@@ -170,6 +170,19 @@ func (sc *Scanner) Scan(customScanPaths []string) []DiscoveredSave {
 		appNames[a.AppID] = a.Name
 	}
 
+	// 3z. Non-Steam shortcuts: appmanifest_*.acf only exists for real Steam
+	// apps, so a shortcut's compatdata prefix (steamapps/compatdata/<id>/)
+	// would otherwise stay nameless — falling back first to a live Steam
+	// Store API lookup that fails (the id isn't a real store app) and then
+	// to a guess at the save folder's own name. Steam's own shortcuts.vdf
+	// already has the real name against that same id; a real Steam app
+	// keeps its appmanifest name if the two ever collided.
+	for appID, name := range steamShortcutAppNames(sc.steamUserdataPaths()) {
+		if _, exists := appNames[appID]; !exists {
+			appNames[appID] = name
+		}
+	}
+
 	// 3a. Steam userdata folders (Windows + Linux/SteamOS/Flatpak).
 	discovered = append(discovered, sc.scanSteamUserdata(dedupSet(discovered), appNames)...)
 
@@ -373,12 +386,7 @@ var libSystemDirs = map[string]bool{
 // all known install locations, naming entries from installed-game
 // manifests when possible.
 func (sc *Scanner) scanSteamUserdata(seen map[string]bool, appNames map[string]string) []DiscoveredSave {
-	steamPaths := sc.SteamUserdataPaths
-	if steamPaths == nil {
-		for _, root := range sc.steamRootDirs() {
-			steamPaths = append(steamPaths, filepath.Join(root, "userdata"))
-		}
-	}
+	steamPaths := sc.steamUserdataPaths()
 
 	var found []DiscoveredSave
 	for _, steamPath := range steamPaths {

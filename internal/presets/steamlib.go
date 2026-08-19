@@ -69,6 +69,29 @@ func (sc *Scanner) steamLibraryPaths() []string {
 	return dedupePaths(libs)
 }
 
+// steamUserdataPaths resolves every Steam userdata root: one per install
+// (Windows + Linux/SteamOS/Flatpak), each holding a <user>/ folder per
+// logged-in account.
+func (sc *Scanner) steamUserdataPaths() []string {
+	if sc.SteamUserdataPaths != nil {
+		return sc.SteamUserdataPaths
+	}
+	var paths []string
+	for _, root := range sc.steamRootDirs() {
+		paths = append(paths, filepath.Join(root, "userdata"))
+	}
+	return paths
+}
+
+// SteamUserdataPaths returns every Steam userdata root on this machine
+// (Windows + Linux/SteamOS/Flatpak installs), for callers outside this
+// package that need to read Steam's own local files directly — e.g. the
+// custom grid artwork a user configured for a game, which a fresh Scanner
+// has no override for.
+func SteamUserdataPaths() []string {
+	return (&Scanner{}).steamUserdataPaths()
+}
+
 // steamInstalledApps parses appmanifest files across all libraries.
 func steamInstalledApps(libraries []string) []steamApp {
 	var apps []steamApp
