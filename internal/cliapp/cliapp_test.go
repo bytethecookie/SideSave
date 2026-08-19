@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -468,36 +467,5 @@ func TestFlagValue(t *testing.T) {
 	// A trailing flag with no value must not read past the end.
 	if got := flagValue([]string{"--url"}, "--url"); got != "" {
 		t.Errorf("trailing flag returned %q", got)
-	}
-}
-
-func TestAliveDaemonPID(t *testing.T) {
-	dir := t.TempDir()
-	pidPath := filepath.Join(dir, "daemon.pid")
-
-	if _, alive := aliveDaemonPID(pidPath); alive {
-		t.Error("a missing pidfile must not report a daemon as alive")
-	}
-
-	// This test process's own PID is guaranteed alive for the duration of
-	// the test — stands in for a genuinely running daemon.
-	self := os.Getpid()
-	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(self)), 0o666); err != nil {
-		t.Fatal(err)
-	}
-	pid, alive := aliveDaemonPID(pidPath)
-	if !alive || pid != self {
-		t.Errorf("aliveDaemonPID = (%d, %v), want (%d, true)", pid, alive, self)
-	}
-
-	// A PID no process on this system holds — pins that a stale pidfile
-	// left behind by a killed/crashed daemon doesn't block every future
-	// start forever. PIDs wrap, so this isn't 100% guaranteed unused, but
-	// astronomically unlikely to collide with a real running process.
-	if err := os.WriteFile(pidPath, []byte("999999"), 0o666); err != nil {
-		t.Fatal(err)
-	}
-	if _, alive := aliveDaemonPID(pidPath); alive {
-		t.Error("a pidfile naming a dead process must not report a daemon as alive")
 	}
 }

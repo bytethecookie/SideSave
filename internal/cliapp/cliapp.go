@@ -185,12 +185,21 @@ func runDaemon(args []string) int {
 	// same port and database — whichever lost the race silently fell back
 	// to an ephemeral port, leaving peers, the Decky panel, and the
 	// desktop app each potentially talking to a different one. Refuse
-	// outright when a previous CLI-started daemon is still alive.
-	pidPath := daemonPIDPath(d.Paths.HomeDir)
-	if pid, alive := aliveDaemonPID(pidPath); alive {
-		fmt.Fprintf(os.Stderr, "error: a daemon is already running (pid %d) — `sidesave daemon status` to check it, or `sidesave daemon stop` first\n", pid)
+	// outright when a daemon is already answering.
+	//
+	// This has to be a network reachability check, not a PID-file one:
+	// inside a Flatpak sandbox, every `flatpak run` gets its own fresh PID
+	// namespace, so os.Getpid() for the very first process in it is always
+	// some small number like 2 regardless of which run it was — a stale
+	// pidfile from an earlier run reads back as "alive" forever, since
+	// *something* always holds that PID in the new sandbox too. The
+	// daemon's actual bound address doesn't have that problem.
+	if daemonRunning() {
+		base, _ := daemonBaseURL()
+		fmt.Fprintf(os.Stderr, "error: a daemon is already running at %s — `sidesave daemon status` to check it, or `sidesave daemon stop` first\n", base)
 		return 1
 	}
+	pidPath := daemonPIDPath(d.Paths.HomeDir)
 
 	if port == 0 {
 		settings, err := d.Store.GetSettings()
@@ -235,30 +244,6 @@ func runDaemon(args []string) int {
 // daemonPIDPath is where a CLI-started daemon records its process id.
 func daemonPIDPath(homeDir string) string {
 	return filepath.Join(homeDir, "daemon.pid")
-}
-
-// aliveDaemonPID reads a daemon.pid file and reports whether the process
-// it names is still running. A pidfile left over from a daemon that
-// didn't exit cleanly (killed, crashed) names a dead PID — that's not
-// "already running", just stale housekeeping runDaemon will overwrite.
-func aliveDaemonPID(pidPath string) (pid int, alive bool) {
-	raw, err := os.ReadFile(pidPath)
-	if err != nil {
-		return 0, false
-	}
-	pid, err = strconv.Atoi(strings.TrimSpace(string(raw)))
-	if err != nil || pid <= 0 {
-		return 0, false
-	}
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return 0, false
-	}
-	// Signal 0 checks liveness without actually sending a signal.
-	if err := proc.Signal(syscall.Signal(0)); err != nil {
-		return 0, false
-	}
-	return pid, true
 }
 
 func cmdUpnp(args []string) int {
