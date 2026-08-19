@@ -30,11 +30,6 @@ func startTestServer(t *testing.T) *testServer {
 	if err != nil {
 		t.Fatalf("daemon.New error = %v", err)
 	}
-	// Hermetic: never let a test daemon download the (17 MB) Ludusavi
-	// manifest in the background — the async fetch races t.TempDir cleanup
-	// on Windows ("file in use") and wastes bandwidth on every run.
-	d.Scanner.ManifestURL = ""
-
 	srv := New(d)
 	addr, err := srv.Start(0)
 	if err != nil {
@@ -369,7 +364,6 @@ func TestPresetScanEndpoint(t *testing.T) {
 	ts := startTestServer(t)
 	// Hermetic: point the scanner away from the real machine.
 	ts.daemon.Scanner.SteamUserdataPaths = []string{}
-	ts.daemon.Scanner.ResolveAppName = nil
 
 	resp, err := http.Get(ts.base + "/api/presets/scan")
 	if err != nil {

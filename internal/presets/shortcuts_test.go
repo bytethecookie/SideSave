@@ -3,9 +3,20 @@ package presets
 import (
 	"bytes"
 	"encoding/binary"
+	"os"
 	"path/filepath"
 	"testing"
 )
+
+func mkfile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o777); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o666); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // fakeShortcutsVDF encodes a minimal but structurally real shortcuts.vdf:
 // a "shortcuts" object holding one entry per (appID, name) pair, each with
@@ -114,7 +125,7 @@ func TestScanProtonCompat_NamesNonSteamShortcut(t *testing.T) {
 	for appID, name := range steamShortcutAppNames(sc.steamUserdataPaths()) {
 		appNames[appID] = name
 	}
-	found := sc.scanProtonCompat([]string{library}, map[string]bool{}, appNames)
+	found := sc.scanProtonCompat([]string{library}, map[string]bool{}, appNames, map[string]bool{})
 
 	if len(found) != 1 {
 		t.Fatalf("expected one discovered save, got %d: %+v", len(found), found)

@@ -281,31 +281,15 @@ func cmdScan(d *daemon.Daemon) int {
 		return 0
 	}
 
-	// Grouped by kind, because a flat list of 250 entries is unreadable.
-	byType := map[string][]presets.DiscoveredSave{}
-	for _, f := range found {
-		byType[f.Type] = append(byType[f.Type], f)
-	}
-	labels := []struct{ kind, title string }{
-		{"game", "Games"}, {"emulator", "Emulators"}, {"repack", "Repacks"},
-	}
-
-	// Collected in display order so the numbers printed are the numbers
-	// `add <n>` resolves.
-	var numbered []presets.DiscoveredSave
+	// Every result is a non-Steam shortcut save — nothing left to group by
+	// kind, so a flat numbered list is all `add <n>` needs to resolve.
+	numbered := found
 
 	section(fmt.Sprintf("Auto-scan %s %d save location(s)", symDot(), len(found)))
-	for _, l := range labels {
-		list := byType[l.kind]
-		if len(list) == 0 {
-			continue
-		}
-		fmt.Printf("\n  %s %s\n", faint(strings.ToUpper(l.title)), faint(fmt.Sprintf("(%d)", len(list))))
-		for _, f := range list {
-			numbered = append(numbered, f)
-			fmt.Printf("    %s %s\n", accent(fmt.Sprintf("[%d]", len(numbered))), bold(f.Name))
-			fmt.Printf("        %s\n", faint(f.SavePath))
-		}
+	fmt.Println()
+	for i, f := range numbered {
+		fmt.Printf("    %s %s\n", accent(fmt.Sprintf("[%d]", i+1)), bold(f.Name))
+		fmt.Printf("        %s\n", faint(f.SavePath))
 	}
 
 	// Persist what was shown so `opensave add <n>` means the entry the user is

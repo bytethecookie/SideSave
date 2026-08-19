@@ -117,7 +117,7 @@ func New(opts Options) (*Daemon, error) {
 		Store:     s,
 		Snapshots: snaps,
 		Log:       log,
-		Scanner:   presets.NewScanner(paths.AppCacheFile),
+		Scanner:   presets.NewScanner(),
 		P2P:       p2p.New(s, snaps, log.Log),
 		Cloud:     cloud.New(s, log.Log),
 		opts:      opts,

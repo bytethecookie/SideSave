@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Proton/Wine save detection for Linux (Steam Deck and desktop).
@@ -40,10 +41,12 @@ var protonVendorSkip = map[string]bool{
 }
 
 // scanProtonCompat walks every Steam library's compatdata prefixes and
-// offers the game saves it finds. appNames resolves AppIDs to titles from
-// installed-game manifests; unresolved ones fall back to the AppID and are
-// upgraded later by resolveNames.
-func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, appNames map[string]string) []DiscoveredSave {
+// offers the save locations of non-Steam shortcuts specifically:
+// realSteamAppIDs excludes real Steam-Cloud games (already synced by
+// Steam itself), and shortcutNames — resolved from shortcuts.vdf — is
+// required for what's left, since an id with no shortcut entry is neither
+// a real Steam game nor a known shortcut and isn't in scope here.
+func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, shortcutNames map[string]string, realSteamAppIDs map[string]bool) []DiscoveredSave {
 	var found []DiscoveredSave
 
 	for _, lib := range libraries {
@@ -54,7 +57,11 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, ap
 		}
 		for _, e := range entries {
 			appID := e.Name()
-			if !e.IsDir() || !isAppID(appID) {
+			if !e.IsDir() || !isAppID(appID) || realSteamAppIDs[appID] {
+				continue
+			}
+			gameName := shortcutNames[appID]
+			if gameName == "" {
 				continue
 			}
 			// Steam's own prefixes use "steamuser", but a prefix created by
@@ -66,7 +73,6 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, ap
 			}
 			steamUser := userHomes[0]
 
-			gameName := appNames[appID]
 			perGame := 0
 			for _, root := range protonSaveRoots {
 				rootPath := filepath.Join(steamUser, root)
@@ -86,13 +92,9 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, ap
 					}
 					seen[abs] = true
 
-					name := sub
-					if gameName != "" {
-						name = fmt.Sprintf("%s (%s)", gameName, sub)
-					}
 					found = append(found, DiscoveredSave{
 						ID:       "proton-" + appID + "-" + sanitizeID(root) + "-" + sanitizeID(sub),
-						Name:     name,
+						Name:     fmt.Sprintf("%s (%s)", gameName, sub),
 						Type:     "game",
 						SavePath: savePath,
 						AppID:    appID,
@@ -109,4 +111,55 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, ap
 		}
 	}
 	return found
+}
+
+// prefixUserDirs returns the per-user home directories inside a prefix.
+// Steam's own prefixes always use "steamuser", but a prefix created by
+// another tool and later added to Steam can carry the real account name.
+func prefixUserDirs(prefix string) []string {
+	usersDir := filepath.Join(prefix, "drive_c", "users")
+	var out []string
+	for _, user := range listSubdirs(usersDir) {
+		if user == "Public" || user == "Default" || user == "Default User" || user == "All Users" {
+			continue
+		}
+		out = append(out, filepath.Join(usersDir, user))
+	}
+	return out
+}
+
+// seenInside reports whether an already-discovered save lives inside dir.
+func seenInside(seen map[string]bool, dir string) bool {
+	prefix := toLowerASCII(dir) + string(filepath.Separator)
+	for p := range seen {
+		if strings.HasPrefix(toLowerASCII(p), prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func toLowerASCII(s string) string {
+	b := []byte(s)
+	for i, c := range b {
+		if c >= 'A' && c <= 'Z' {
+			b[i] = c + 32
+		}
+	}
+	return string(b)
+}
+
+// looksLikeHexHash reports cache dirs named as long hex digests (browser /
+// shader caches that sometimes land in a Proton prefix).
+func looksLikeHexHash(s string) bool {
+	if len(s) < 32 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') && (c < 'A' || c > 'F') {
+			return false
+		}
+	}
+	return true
 }
