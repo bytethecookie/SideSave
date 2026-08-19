@@ -565,18 +565,34 @@ func (d *Daemon) ValidateSavePath(rawPath string) (string, error) {
 	}
 
 	// One folder, one game: a second tracker on the same path means double
-	// watchers, duplicate snapshots, and sync confusion.
-	norm := strings.ToLower(abs)
+	// watchers, duplicate snapshots, and sync confusion. Resolve symlinks
+	// before comparing — Steam's own ~/.steam/steam -> ~/.local/share/Steam
+	// convention means two different path spellings can be the exact same
+	// files on disk; a literal string comparison misses that (caught live:
+	// a scan result reached through the symlink tracked as a second, fully
+	// duplicate copy of a folder already tracked through the real path).
+	norm := normalizedForDupeCheck(abs)
 	games, err := d.Store.ListGames()
 	if err == nil {
 		for _, g := range games {
-			if strings.ToLower(filepath.Clean(g.SavePath)) == norm {
+			if normalizedForDupeCheck(filepath.Clean(g.SavePath)) == norm {
 				return "", fmt.Errorf("%q already tracks this folder", g.Name)
 			}
 		}
 	}
 
 	return abs, nil
+}
+
+// normalizedForDupeCheck resolves symlinks (falling back to the literal
+// path when that fails — a path that doesn't exist can't be resolved, but
+// still needs to compare consistently) and lowercases, so two different
+// spellings of the same physical directory compare equal.
+func normalizedForDupeCheck(p string) string {
+	if real, err := filepath.EvalSymlinks(p); err == nil {
+		p = real
+	}
+	return strings.ToLower(p)
 }
 
 // CheckRestoreTarget validates a path files are about to be restored into
