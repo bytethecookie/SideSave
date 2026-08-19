@@ -123,3 +123,55 @@ func TestRemoveGameAlias(t *testing.T) {
 		t.Error("alias should be gone after RemoveGameAlias")
 	}
 }
+
+func TestFindPeerPlaceholderByName(t *testing.T) {
+	s := openTestStore(t)
+	if err := s.CreateGame(Game{
+		ID: "sackboy", Name: "Sackboy: A Big Adventure",
+		SavePath: `/home/aiboxadmin/.local/share/Steam/steamapps/compatdata/3472464288/pfx/.../Sackboy`,
+		PeerPlaceholder: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// A locally-scanned game with the same name is NOT a placeholder — it
+	// must never shadow the real thing on a lookup.
+	if err := s.CreateGame(Game{ID: "other", Name: "Other Game", SavePath: `/home/x/Other`}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.FindPeerPlaceholderByName("Sackboy: A Big Adventure")
+	if err != nil {
+		t.Fatalf("FindPeerPlaceholderByName error = %v", err)
+	}
+	if got.ID != "sackboy" {
+		t.Errorf("FindPeerPlaceholderByName = %q, want sackboy", got.ID)
+	}
+
+	if _, err := s.FindPeerPlaceholderByName("Other Game"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("non-placeholder game name err = %v, want ErrNotFound", err)
+	}
+	if _, err := s.FindPeerPlaceholderByName("Nothing Tracked"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown name err = %v, want ErrNotFound", err)
+	}
+}
+
+// Once a placeholder's path is explicitly set to the real install, it's no
+// longer a placeholder — a second install found later has nothing left to
+// warn about, and the same setting is what TrackGame tells the user to run.
+func TestUpdateGame_ClearingPlaceholderViaPathChange(t *testing.T) {
+	s := openTestStore(t)
+	g := Game{ID: "sackboy", Name: "Sackboy: A Big Adventure", SavePath: `/old/path`, PeerPlaceholder: true}
+	if err := s.CreateGame(g); err != nil {
+		t.Fatal(err)
+	}
+
+	g.SavePath = `/real/path`
+	g.PeerPlaceholder = false
+	if err := s.UpdateGame(g); err != nil {
+		t.Fatalf("UpdateGame error = %v", err)
+	}
+
+	if _, err := s.FindPeerPlaceholderByName("Sackboy: A Big Adventure"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound — the game was just confirmed as real, not a placeholder anymore", err)
+	}
+}

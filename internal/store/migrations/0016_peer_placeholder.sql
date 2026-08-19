@@ -1,0 +1,14 @@
+-- Marks a game auto-tracked from a peer sync before this device has ever
+-- independently found it — e.g. a title synced here that isn't installed
+-- on this device yet.
+--
+-- A non-Steam shortcut's local id is a CRC computed from its own exe path,
+-- so it differs on every device. When this device later installs the same
+-- game and a local scan finds it for real, that install lands at a
+-- different path than the one already synced here under the peer's id —
+-- with nothing to say the two are the same game, a plain re-track creates
+-- a second, disconnected entry that never converges with the first.
+--
+-- Flagging the auto-tracked entry lets TrackGame recognize that case by
+-- name and point the user at relinking instead.
+ALTER TABLE games ADD COLUMN peer_placeholder INTEGER NOT NULL DEFAULT 0;

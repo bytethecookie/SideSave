@@ -421,6 +421,20 @@ func (d *Daemon) TrackGame(game store.Game) (store.Game, error) {
 		if existing, err := d.Store.FindGameBySavePath(abs); err == nil {
 			return store.Game{}, fmt.Errorf("this folder is already tracked (as %q)", existing.Name)
 		}
+		// A peer already synced this exact game name here as a placeholder,
+		// at a path that meant nothing on this device — a non-Steam
+		// shortcut's local id is a CRC of its own exe path, so it differs
+		// per device, and the placeholder just inherited the peer's. This
+		// scan just found the real install; relink the placeholder to it
+		// instead of tracking a second copy the peer relationship never
+		// connects back to the first.
+		if ph, err := d.Store.FindPeerPlaceholderByName(game.Name); err == nil && ph.SavePath != abs {
+			return store.Game{}, fmt.Errorf(
+				"%q was already synced here from a peer, tracked as %q at %q — likely this same game, "+
+					"just not installed here yet when it synced. Point it at the real location instead of "+
+					"tracking a duplicate:\n  opensave game %s set path %q",
+				game.Name, ph.ID, ph.SavePath, ph.ID, abs)
+		}
 		base := store.SlugifyGameID(game.Name)
 		if base == "" {
 			return store.Game{}, fmt.Errorf("game name %q produces an empty id", game.Name)

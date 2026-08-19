@@ -48,6 +48,10 @@ type Game struct {
 	// again, preventing feedback loops (snapshot -> event -> snapshot).
 	LastManifestHash string `db:"last_manifest_hash" json:"-"`
 	CreatedAt        string `db:"created_at" json:"createdAt"`
+	// PeerPlaceholder marks a game auto-tracked from a peer sync before this
+	// device ever independently found it — see TrackGame and
+	// FindPeerPlaceholderByName.
+	PeerPlaceholder bool `db:"peer_placeholder" json:"peerPlaceholder"`
 }
 
 // CreateGame inserts a new game and its default "main" branch in one
@@ -67,8 +71,8 @@ func (s *Store) CreateGame(g Game) error {
 	defer tx.Rollback()
 
 	_, err = tx.NamedExec(`
-		INSERT INTO games (id, name, save_path, active_branch, auto_sync, max_snapshots, max_manual_snapshots, app_id, exe_path, cover_url)
-		VALUES (:id, :name, :save_path, :active_branch, :auto_sync, :max_snapshots, :max_manual_snapshots, :app_id, :exe_path, :cover_url)`,
+		INSERT INTO games (id, name, save_path, active_branch, auto_sync, max_snapshots, max_manual_snapshots, app_id, exe_path, cover_url, peer_placeholder)
+		VALUES (:id, :name, :save_path, :active_branch, :auto_sync, :max_snapshots, :max_manual_snapshots, :app_id, :exe_path, :cover_url, :peer_placeholder)`,
 		g)
 	if err != nil {
 		return fmt.Errorf("insert game: %w", err)
@@ -133,7 +137,8 @@ func (s *Store) UpdateGame(g Game) error {
 			app_id = :app_id,
 			exe_path = :exe_path,
 			cover_url = :cover_url,
-			last_manifest_hash = :last_manifest_hash
+			last_manifest_hash = :last_manifest_hash,
+			peer_placeholder = :peer_placeholder
 		WHERE id = :id`, g)
 	if err != nil {
 		return fmt.Errorf("update game %s: %w", g.ID, err)

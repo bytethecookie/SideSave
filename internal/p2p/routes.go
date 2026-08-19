@@ -444,6 +444,11 @@ func (e *Engine) ensureManifestGame(gameID string, q manifestGameQuery) (store.G
 		// doesn't show as a blank tile on this device.
 		AppID:    q.AppID,
 		CoverURL: q.CoverURL,
+		// This device has never independently found this game — localPath
+		// only exists because it was translated from the peer's own path,
+		// under an id (App ID or save-folder name) that means nothing here.
+		// See FindPeerPlaceholderByName.
+		PeerPlaceholder: true,
 	}
 	// The alias check above and this insert are not one step, and linking is
 	// a separate write that can land between them — leaving the peer's game

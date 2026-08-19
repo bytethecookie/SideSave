@@ -37,6 +37,29 @@ func (s *Store) FindGameByAppID(appID string) (Game, error) {
 	}
 }
 
+// FindPeerPlaceholderByName returns the peer-auto-tracked placeholder game
+// with this exact name, if exactly one exists. TrackGame uses this to spot
+// a fresh local scan finding the real install of a game that was only ever
+// pre-staged here by a peer sync, so it can point the user at relinking
+// instead of tracking a second, disconnected copy.
+//
+// More than one match refuses to pick — same reasoning as
+// FindGameByAppID — and simply means no suggestion is offered.
+func (s *Store) FindPeerPlaceholderByName(name string) (Game, error) {
+	if name == "" {
+		return Game{}, ErrNotFound
+	}
+	var games []Game
+	if err := s.db.Select(&games,
+		`SELECT * FROM games WHERE name = ? AND peer_placeholder = 1`, name); err != nil {
+		return Game{}, fmt.Errorf("find peer placeholder by name %s: %w", name, err)
+	}
+	if len(games) != 1 {
+		return Game{}, ErrNotFound
+	}
+	return games[0], nil
+}
+
 // AddGameAlias records that aliasID refers to the same game as gameID on this
 // device. A peer sync addressed to aliasID then resolves to gameID.
 func (s *Store) AddGameAlias(aliasID, gameID string) error {
@@ -138,8 +161,8 @@ func (s *Store) CreateGameUnlessAliased(g Game) (canonicalID string, err error) 
 		g.MaxSnapshots = 20
 	}
 	if _, err := tx.NamedExec(`
-		INSERT INTO games (id, name, save_path, active_branch, auto_sync, max_snapshots, max_manual_snapshots, app_id, exe_path, cover_url)
-		VALUES (:id, :name, :save_path, :active_branch, :auto_sync, :max_snapshots, :max_manual_snapshots, :app_id, :exe_path, :cover_url)`,
+		INSERT INTO games (id, name, save_path, active_branch, auto_sync, max_snapshots, max_manual_snapshots, app_id, exe_path, cover_url, peer_placeholder)
+		VALUES (:id, :name, :save_path, :active_branch, :auto_sync, :max_snapshots, :max_manual_snapshots, :app_id, :exe_path, :cover_url, :peer_placeholder)`,
 		g); err != nil {
 		return "", fmt.Errorf("insert game: %w", err)
 	}

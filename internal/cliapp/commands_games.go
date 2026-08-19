@@ -69,6 +69,9 @@ func cmdGame(d *daemon.Daemon, args []string) int {
 			return fail(asJSON, err)
 		}
 		game.SavePath = abs
+		// A deliberate path change is exactly the "this is where it really
+		// lives" confirmation a peer-synced placeholder was waiting for.
+		game.PeerPlaceholder = false
 	default:
 		return fail(asJSON, fmt.Errorf("unknown setting %q\n\n%s", key, gameUsage))
 	}
