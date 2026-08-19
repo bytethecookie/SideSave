@@ -28,7 +28,18 @@ const updateRepo = "Liquid-co/OpenSave"
 // and reports whether it is newer than the running build. Any failure
 // (offline, rate-limited, no releases) resolves to "no update" so the UI
 // never blocks or errors on it.
+//
+// This build is a personal fork carrying local-only fixes upstream doesn't
+// have (shortcuts.vdf-based non-Steam game naming, local Steam grid art for
+// covers, a Steam-symlink scan-dedup fix) — always reporting "no update"
+// keeps the banner from ever offering to silently replace it with a stock
+// upstream release. See the dead code below for what this looked like
+// before, if this fork is ever retired in favor of tracking upstream again.
 func (a *App) CheckForUpdate() map[string]any {
+	return map[string]any{"available": false, "current": AppVersion}
+}
+
+func (a *App) checkForUpdateUpstream() map[string]any {
 	none := map[string]any{"available": false, "current": AppVersion}
 
 	rel, err := selfupdate.LatestRelease(updateRepo, "OpenSave/"+AppVersion, a.wantsPreReleases())
