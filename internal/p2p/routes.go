@@ -351,7 +351,18 @@ func (e *Engine) backfillCover(game store.Game, q manifestGameQuery) store.Game 
 	if game.CoverURL == "" && q.CoverURL != "" {
 		game.CoverURL = q.CoverURL
 		if game.AppID == "" {
-			game.AppID = q.AppID
+			// A non-Steam shortcut's AppID is a CRC of its own exe path —
+			// different on every device. This game's own save path is the
+			// one thing that reliably says what its AppID actually is
+			// here; trust that over the peer's when it's available, and
+			// only fall back to the peer's id when there's no local signal
+			// at all (a manually tracked save with nothing Proton-shaped
+			// to derive one from).
+			if local := store.AppIDFromCompatdataPath(game.SavePath); local != "" {
+				game.AppID = local
+			} else {
+				game.AppID = q.AppID
+			}
 		}
 		if err := e.Store.UpdateGame(game); err == nil {
 			e.notifyGamesUpdate()

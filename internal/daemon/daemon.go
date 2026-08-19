@@ -288,6 +288,20 @@ func SteamCoverURL(appID string) string {
 	return "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appID + "/header.jpg"
 }
 
+// IsSteamCover reports whether a cover URL is auto-generated Steam CDN art
+// (as opposed to a user's custom cover), so callers know it's safe to
+// regenerate rather than something to preserve.
+func IsSteamCover(url string) bool {
+	return strings.Contains(url, "steamstatic.com/steam/apps/")
+}
+
+// AppIDFromCompatdataPath re-exports store.AppIDFromCompatdataPath — kept
+// here too since callers already reach cover/AppID helpers through this
+// package.
+func AppIDFromCompatdataPath(path string) string {
+	return store.AppIDFromCompatdataPath(path)
+}
+
 // runCloudUpload mirrors one snapshot to the configured cloud provider and
 // then trims that game's remote copies. Always started with d.uploads already
 // incremented by the caller, and it owns releasing that count.

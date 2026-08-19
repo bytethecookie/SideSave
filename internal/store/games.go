@@ -23,6 +23,28 @@ func SlugifyGameID(name string) string {
 	return strings.Trim(id, "-")
 }
 
+// compatdataAppIDRe matches the AppID segment of a Proton prefix path
+// (.../steamapps/compatdata/<appid>/pfx/...), Windows or Linux separators.
+var compatdataAppIDRe = regexp.MustCompile(`[/\\]compatdata[/\\](\d+)[/\\]`)
+
+// AppIDFromCompatdataPath extracts the AppID embedded in a save path when
+// it's shaped like a Proton prefix, "" otherwise.
+//
+// A non-Steam shortcut's AppID is a CRC of its own exe path, so it's
+// different on every device — a game's own save path is the one thing that
+// reliably says what its AppID actually is *on this device*, which is why
+// this lives beside Game rather than being derived once and stored: any
+// caller holding a peer's differently-computed id for the same logical
+// game (during sync, or a stale value left from before a relink) should
+// prefer what the local path says over what it was told.
+func AppIDFromCompatdataPath(path string) string {
+	m := compatdataAppIDRe.FindStringSubmatch(path)
+	if m == nil {
+		return ""
+	}
+	return m[1]
+}
+
 // ErrNotFound is returned by single-row lookups when no matching row exists.
 var ErrNotFound = errors.New("not found")
 

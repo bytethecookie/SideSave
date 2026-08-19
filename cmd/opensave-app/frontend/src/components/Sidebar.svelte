@@ -1,5 +1,6 @@
 <script>
   import { view, navigate, settings, gameList, conflictCount, pairingRequests, syncActivity } from '../lib/stores.js';
+  import { gameCover } from '../lib/api.js';
 
   let filter = '';
 
@@ -66,9 +67,9 @@
       >
         <span class="thumb">
           <span class="cover-fallback">{initials(game.name)}</span>
-          {#if game.coverUrl}
+          {#if gameCover(game)}
             <img
-              src={game.coverUrl}
+              src={gameCover(game)}
               alt=""
               on:load={(e) => (e.currentTarget.style.display = '')}
               on:error={(e) => (e.currentTarget.style.display = 'none')}

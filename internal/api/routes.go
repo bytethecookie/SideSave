@@ -304,10 +304,19 @@ func (s *Server) handleUpdateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	game.ID = gameID // id is not client-mutable
+	// A relinked save path carries its own AppID when it's a Proton
+	// prefix — re-resolving it here is what keeps the cover refresh below
+	// (and cross-device matching) working after a relink, instead of
+	// silently keeping whatever id the save path used to have.
+	if game.SavePath != oldSavePath {
+		if appID := daemon.AppIDFromCompatdataPath(game.SavePath); appID != "" {
+			game.AppID = appID
+		}
+	}
 	// Cover art: a user-set custom URL is always kept. An empty cover, or
 	// a previously auto-generated Steam cover, is (re)derived from the
 	// AppID — so changing the AppID refreshes the art.
-	if game.CoverURL == "" || isSteamCover(game.CoverURL) {
+	if game.CoverURL == "" || daemon.IsSteamCover(game.CoverURL) {
 		game.CoverURL = daemon.SteamCoverURL(game.AppID)
 	}
 
@@ -328,12 +337,6 @@ func (s *Server) handleUpdateGame(w http.ResponseWriter, r *http.Request) {
 
 	s.BroadcastGamesUpdate()
 	writeJSON(w, http.StatusOK, s.gamePayload(game))
-}
-
-// isSteamCover reports whether a cover URL is an auto-generated Steam CDN
-// header image (as opposed to a user's custom cover).
-func isSteamCover(url string) bool {
-	return strings.Contains(url, "steamstatic.com/steam/apps/")
 }
 
 // handleReloadWatchers makes this daemon re-read the games table and bring

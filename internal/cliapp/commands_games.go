@@ -72,6 +72,15 @@ func cmdGame(d *daemon.Daemon, args []string) int {
 		// A deliberate path change is exactly the "this is where it really
 		// lives" confirmation a peer-synced placeholder was waiting for.
 		game.PeerPlaceholder = false
+		// Same re-resolution the HTTP path takes: a relinked Proton prefix
+		// carries its own AppID, which is otherwise never refreshed after
+		// the game was first tracked under a different one.
+		if appID := daemon.AppIDFromCompatdataPath(abs); appID != "" {
+			game.AppID = appID
+		}
+		if game.CoverURL == "" || daemon.IsSteamCover(game.CoverURL) {
+			game.CoverURL = daemon.SteamCoverURL(game.AppID)
+		}
 	default:
 		return fail(asJSON, fmt.Errorf("unknown setting %q\n\n%s", key, gameUsage))
 	}
