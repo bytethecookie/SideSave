@@ -159,7 +159,18 @@ func dedupePaths(paths []string) []string {
 		if err != nil {
 			continue
 		}
-		key := strings.ToLower(abs)
+		// Steam's own convention symlinks ~/.steam/steam to
+		// ~/.local/share/Steam — two different candidate roots that are the
+		// same physical library. Deduping on the plain path missed that (a
+		// scan reported every installed game twice); resolving symlinks
+		// first collapses them to one. A path that doesn't exist yet (a
+		// hardcoded Windows default on a Linux box, say) can't be resolved,
+		// so it just dedupes on its literal form as before.
+		key := abs
+		if real, err := filepath.EvalSymlinks(abs); err == nil {
+			key = real
+		}
+		key = strings.ToLower(key)
 		if seen[key] {
 			continue
 		}
