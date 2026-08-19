@@ -21,7 +21,15 @@ import (
 
 // updateRepo is the GitHub "owner/repo" releases are read from. Kept in step
 // with the desktop app's constant of the same name.
-const updateRepo = "Liquid-co/OpenSave"
+//
+// This fork doesn't publish releases here (yet) — LatestRelease simply
+// finds none and `sidesave update` reports "no update available", which
+// is the correct behavior until that changes. The alternative — leaving
+// this pointed at Liquid-co/OpenSave — is exactly the update banner risk
+// this fork disabled the GUI's version of; `sidesave update` is opt-in
+// rather than a passive banner, but it would still silently replace this
+// build with a stock upstream release if ever run.
+const updateRepo = "bytethecookie/SideSave"
 
 type releaseInfo struct {
 	TagName    string `json:"tag_name"`

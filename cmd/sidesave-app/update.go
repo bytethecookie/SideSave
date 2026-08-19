@@ -22,7 +22,13 @@ func (a *App) wantsPreReleases() bool {
 
 // updateRepo is the GitHub "owner/repo" whose releases are checked for a
 // newer version. Change this one line if the project moves.
-const updateRepo = "Liquid-co/OpenSave"
+//
+// Currently unreachable in practice — CheckForUpdate always reports no
+// update available (see the comment there), so nothing ever calls the
+// code that reads this. Kept pointed at this fork's own repo anyway, in
+// step with the CLI's constant of the same name, rather than leaving it
+// aimed at Liquid-co/OpenSave for whichever code path might reach it next.
+const updateRepo = "bytethecookie/SideSave"
 
 // CheckForUpdate best-effort asks GitHub for the latest published release
 // and reports whether it is newer than the running build. Any failure
