@@ -76,7 +76,6 @@
   // ── Auto-scan overlay ────────────────────────────────────────────
   let scanOpen = false;
   let scanFilter = '';
-  let scanType = 'all';
   let selected = new Set();
   let selectedCount = 0; // reactive mirror of selected.size
   let showTracked = false; // include saves already being tracked
@@ -135,7 +134,6 @@
   // it as a dependency and refreshes the list when tracked-state changes.
   $: filteredResults = (scanResults ?? []).filter((r) => {
     if (!showTracked && trackedPaths.has(normPath(r.savePath))) return false;
-    if (scanType !== 'all' && r.type !== scanType) return false;
     if (scanFilter && !`${r.name} ${r.savePath}`.toLowerCase().includes(scanFilter.toLowerCase())) return false;
     return true;
   });
@@ -146,12 +144,7 @@
   $: trackedResults = filteredResults.filter((r) => trackedPaths.has(normPath(r.savePath)));
   $: orderedResults = [...availableResults, ...trackedResults];
   $: shownAvailable = availableResults.length;
-  $: scanCounts = {
-    all: (scanResults ?? []).length,
-    emulator: (scanResults ?? []).filter((r) => r.type === 'emulator').length,
-    repack: (scanResults ?? []).filter((r) => r.type === 'repack').length,
-    game: (scanResults ?? []).filter((r) => r.type === 'game').length
-  };
+  $: scanCounts = { all: (scanResults ?? []).length };
 
   function toggleSelect(id) {
     if (selected.has(id)) selected.delete(id);
@@ -260,8 +253,6 @@
   }
 
   $: onlinePeers = Object.values($peers).filter((p) => p.status === 'online');
-  const typeLabels = { emulator: 'Emulator', repack: 'Repack', game: 'Game' };
-  const typeIcon = (t) => (t === 'emulator' ? '🕹️' : t === 'repack' ? '📦' : '🎮');
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -316,17 +307,10 @@
       </div>
 
       {#if scanning}
-        <div class="scan-loading"><span class="cspin"></span> Scanning Steam, emulators, and configured folders…</div>
+        <div class="scan-loading"><span class="cspin"></span> Scanning Steam for non-Steam shortcut saves…</div>
       {:else}
         <div class="scan-toolbar">
           <input class="scan-search" placeholder="Filter by name or path…" bind:value={scanFilter} />
-          <div class="scan-type-tabs">
-            {#each [['all', 'All'], ['game', 'Games'], ['emulator', 'Emulators'], ['repack', 'Repacks']] as [id, label]}
-              <button class:active={scanType === id} on:click={() => (scanType = id)}>
-                {label} <span class="count">{scanCounts[id]}</span>
-              </button>
-            {/each}
-          </div>
           <label class="scan-show-tracked" title="Also show saves you already track">
             <input type="checkbox" bind:checked={showTracked} />
             Show tracked
@@ -361,14 +345,13 @@
                     />
                   {/if}
                   <div class="cover-fallback">
-                    <span class="cover-emoji">{typeIcon(item.type)}</span>
+                    <span class="cover-emoji">🎮</span>
                     <span class="cover-fallback-name">{item.name}</span>
                   </div>
 
                   {#if selected.has(item.id)}
                     <div class="cover-check">✓</div>
                   {/if}
-                  <span class="cover-type">{typeLabels[item.type] ?? item.type}</span>
 
                   {#if isTracked(item)}
                     <span class="cover-tracked">✓ Tracked</span>
