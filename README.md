@@ -4,145 +4,136 @@
 
 # SideSave
 
-### Steam Cloud for every game you own.
+### Save sync for the games Steam Cloud doesn't cover.
 
-**SideSave** syncs your game saves between devices, peer-to-peer — no Steam required, no accounts, no subscriptions. Point it at a folder, pair your devices, and your saves follow you everywhere.
+**SideSave** is a personal fork of [OpenSave](https://github.com/Liquid-co/OpenSave), narrowed to one job: syncing save data for non-Steam games added to Steam as shortcuts, between two specific machines, peer-to-peer.
 
-[![Release](https://img.shields.io/github/v/release/Liquid-co/OpenSave?sort=semver)](https://github.com/Liquid-co/OpenSave/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Discord](https://img.shields.io/badge/Discord-join%20the%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/hvBv92DZvn)
 [![Go](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go&logoColor=white)](https://go.dev)
-![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Steam%20Deck-lightgrey)
-
-*A complete Go rewrite of the original Node.js/Electron app: one small native binary, no runtime to install, and wire-compatible with existing peers.*
-
-[Install](#install) · [Quick start](#quick-start) · [Screenshots](#screenshots) · [How it works](#how-it-works) · [CLI](#command-line) · [Self-host the relay](#self-hosting-the-relay) · [FAQ](#faq) · [**Discord**](https://discord.gg/hvBv92DZvn)
-
-<br>
-
-<img src="docs/screenshots/home-library.png" alt="SideSave library — tracked games with cover art, branches, and snapshot counts" width="850" />
+![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20Steam%20Deck-lightgrey)
 
 </div>
 
 ---
 
-## Why SideSave
+## Why this exists
 
-Steam Cloud only covers games bought on Steam — and only when the developer opts in. Everything else (emulators, GOG, Epic, single-player games with no cloud support) is on you: manually copying save folders between your desktop, laptop, and Steam Deck, and hoping you grabbed the newest one.
+Steam Cloud syncs your save for any game you bought on Steam. It has no idea a
+non-Steam game exists — a game added via **Add a Non-Steam Game**, running
+through Proton, gets its own prefix under `steamapps/compatdata/<appid>/` and
+Valve never looks at it again. Two machines, two separate saves, no sync,
+forever.
 
-SideSave gives **every** game the Steam Cloud experience:
+[OpenSave](https://github.com/Liquid-co/OpenSave) solves that generally — it
+scans Steam, a dozen emulators, cracked-game repack conventions, and a
+20,000-title community database, then syncs whatever it finds. That's more
+than one household actually needs: real Steam games already have Steam Cloud,
+and everything else this fork cares about is specifically the non-Steam
+shortcuts.
 
-- **You own it.** Saves sync directly between *your* devices. No account to create, nothing stored on someone else's server.
-- **It's automatic.** Auto-detects hundreds of games, watches for changes, and syncs the moment a save is written.
-- **It's safe.** Every change is snapshotted and reversible. Conflicts are detected and resolved without silently clobbering a playthrough.
+SideSave is what's left after cutting everything down to that one case.
 
-## Features
+## What's different from upstream
 
-- **Auto-detection** — scans for saves from Steam, emulators (RetroArch, Dolphin, Ryujinx, Yuzu, Citra, PCSX2, RPCS3, PPSSPP, Cemu, Xenia), Steam-emulator repacks (Goldberg/GSE, CODEX, RUNE, Tenoke, EMPRESS, Online-Fix, CPY, SKIDROW, 3DM, …), Epic, GOG, Unity `LocalLow`, and Unreal Engine conventions — plus the community-maintained [Ludusavi manifest](https://github.com/mtkennerly/ludusavi-manifest) covering save paths for tens of thousands of games, whatever store (or no store) they came from.
-- **Track anything** — any folder or single save file, watched live with block-level change detection (SHA-256, 64 KB–2 MB adaptive blocks). Only the blocks that changed are ever transferred.
-- **P2P sync** — automatic over LAN (zero-config discovery) or across the internet through a relay **room code** — no port forwarding. A paired-device model means every connection is explicitly approved.
-- **Snapshot history** — every change creates a versioned snapshot. Roll back a whole save or a single file; branches keep parallel playthroughs (and conflict resolutions) safe.
-- **Smart conflict handling** — diverged saves are detected by **sync lineage**, not wall-clock timestamps. Keep yours, keep theirs, or keep both on a new branch.
-- **Cloud backup** — optional mirroring to Google Drive, Dropbox, OneDrive, WebDAV, a webhook, or a local/NAS folder.
-- **Cross-device game matching** — the same title tracked under different names on two machines (a Steam install here, a differently-named folder there) can be matched by Steam App ID or linked by hand. App-ID matching is opt-in, so two separate copies of a game are never merged without asking.
-- **A full command line** — `sidesave` does everything the app does, for a Steam Deck in Game Mode or a headless server. See [Command line](#command-line).
-- **In-app updates** — one-click update from GitHub releases, pull a newer build straight from a paired device, or `sidesave update` from the terminal.
-- **Privacy-first** — no accounts, no telemetry. The relay only routes WebSocket frames and writes no save to disk; the hop to it is encrypted, and you can self-host it so nobody else is on the path at all.
+- **Identifies non-Steam shortcuts correctly.** Steam computes a CRC-based
+  AppID for a shortcut from its own exe path when the shortcut is created,
+  and writes the real game name right next to it in `shortcuts.vdf`. Upstream
+  never read that file — a shortcut's save location showed up under whatever
+  its save folder happened to be named (`SB`, `GSE Saves`, a hex hash) with no
+  way to tell what game it belonged to. SideSave reads `shortcuts.vdf`
+  directly: no network lookup, no guessing.
+- **Only tracks actual save data.** A game following Unreal's `Saved/`
+  convention keeps its real progress in `Saved/SaveGames/`, right next to
+  `Saved/Config/` (resolution, graphics quality, key bindings —
+  device-specific, and has no business following a save from a Steam Deck to
+  a desktop or back) and `Saved/Logs/`/`Saved/CrashReportClient/` (never save
+  data at all). Scan now offers only `SaveGames`. The engine-wide
+  `AppData/Local/UnrealEngine` crash-reporter cache — not nested under any
+  one game — and shader/translation-layer caches like `dxvk` are excluded
+  entirely.
+- **Cover art works for non-Steam shortcuts.** Upstream only ever asked
+  Steam's CDN for box art, keyed by AppID — which 404s for a shortcut's
+  locally-computed id, since the CDN has never heard of it. Steam already has
+  the art you configured sitting in `userdata/<user>/config/grid/` on disk;
+  SideSave checks there first, offline-capable, before ever touching the
+  network.
+- **Scan shows only what this fork cares about.** Real Steam-Cloud games,
+  emulator saves, repack-wrapper detection, portable installs, and the
+  Ludusavi community manifest are gone, not just filtered — Steam Cloud
+  already covers the first, and the rest was scope this fork doesn't need.
+  `internal/presets` went from ~5,900 lines to ~1,200.
+- **Won't silently overwrite itself.** The update-check banner is disabled,
+  and `sidesave update` points at this fork's own (currently empty) release
+  page instead of upstream's — so nothing in normal use will ever replace
+  this build with a stock OpenSave release.
+- **Warns instead of silently duplicating.** A game synced here from a peer
+  before this device had it installed gets tracked under a placeholder path
+  (a non-Steam shortcut's AppID means nothing on another device). If this
+  device later finds the same game installed for real, SideSave now points
+  you at relinking the existing entry instead of quietly tracking a second,
+  disconnected copy.
+- **Renamed throughout** — module path, binaries, Flatpak app ID, Decky
+  plugin, data directory. A migration handles `~/.opensave` → `~/.sidesave`
+  automatically on first run.
 
-## Screenshots
+## What's unchanged
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="docs/screenshots/auto-scan.png" alt="Auto-scan results — detected saves as a cover-art grid" /><br>
-      <sub><b>Auto-scan</b> — 158 saves found on this PC, shown as cover art. Games, emulators, and repacks, one click to track.</sub>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/cloud-backup.png" alt="Cloud Backup — provider selection with Google Drive connected" /><br>
-      <sub><b>Cloud backup</b> — mirror snapshots to Drive, Dropbox, OneDrive, WebDAV, or a NAS folder. Optional; P2P needs no cloud.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="docs/screenshots/devices-pairing.png" alt="Devices — internet pairing with a relay room code" /><br>
-      <sub><b>Internet sync</b> — pair devices anywhere with a room code. No port forwarding, and the relay never stores saves.</sub>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/home-library.png" alt="Home — tracked library with snapshots per game" /><br>
-      <sub><b>Your library</b> — every tracked game with its branch and snapshot history, one Sync all button away.</sub>
-    </td>
-  </tr>
-</table>
+The sync engine itself is untouched: block-level delta sync, snapshot
+history with branches, LAN auto-discovery and WAN sync via a relay room
+code, conflict detection by sync lineage (not wall-clock timestamps), and
+optional cloud-backup mirroring. The full CLI, the desktop app, and the
+Decky Loader Game Mode plugin all still work — this fork changed what gets
+*found* and *shown*, not how syncing itself works once something is tracked.
 
 ## Install
 
-| Platform | Download | Run |
-|---|---|---|
-| **Windows** | `SideSave.Setup.exe` (installer) or portable `SideSave.exe` | Double-click |
-| **Linux** | `sidesave-linux-amd64.tar.gz` | extract, then `./sidesave` |
-| **Steam Deck / SteamOS** | `SideSave.flatpak` | see [Steam Deck install](#steam-deck-install) |
-
-Grab the latest from the [**Releases**](https://github.com/bytethecookie/OpenSave/releases) page (this fork does not yet have automated release builds — see the fork's own build notes for building from source in the meantime).
-
-### Steam Deck install
-
-> **Use `SideSave.flatpak`, not `sidesave-linux-amd64.tar.gz`.** The tarball's
-> desktop app will not start on a stock Deck: SteamOS ships no WebKitGTK, which
-> it needs to draw its window. This trips people up because the tarball's name
-> reads like the Steam Deck build.
-
-The Flatpak is the build that works on a stock Deck — SteamOS ships no
-WebKitGTK and wipes manually-installed system packages on OS updates; the
-Flatpak bundles everything and survives updates.
-
-1. Switch to **Desktop Mode** (Steam button → Power → Switch to Desktop).
-2. Download `SideSave.flatpak` from the [Releases](https://github.com/bytethecookie/OpenSave/releases) page, or build it yourself (see the fork's build notes).
-3. Double-click it to install via Discover, or run
-   `flatpak install --user SideSave.flatpak` in Konsole.
-4. Launch SideSave from the application menu. Optional: add it to Steam
-   (right-click → *Add to Steam*) to open it from Game Mode.
-
-If you only want background syncing and no window, the **command line has no
-such constraint** — it needs no WebKitGTK and runs anywhere:
+This fork doesn't publish releases — build from source:
 
 ```bash
-curl -fsSL https://sidesave.org/install.sh | sh
-sidesave scan && sidesave service install
-sudo loginctl enable-linger $USER
+# CLI + daemon (this is all a headless install needs)
+go build -o sidesave-cli ./cmd/sidesave-cli
+
+# Desktop app (needs Node, the Wails CLI, and libgtk-3-dev + libwebkit2gtk-4.1-dev)
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+cd cmd/sidesave-app && wails build -tags webkit2_41
+
+# Relay server, if self-hosting
+go build -o sidesave-relay ./cmd/sidesave-relay
 ```
 
-Saves on the SD card are found automatically (`/run/media` is visible to
-the app), and Proton game saves are detected inside their `compatdata`
-prefixes. The plain Linux tarball also works on the Deck if you install
-`webkit2gtk-4.1` yourself, but SteamOS updates can remove it — the
-Flatpak is the supported path. A Decky plugin for Game Mode lives in
-[`sidesave-decky-plugin/`](sidesave-decky-plugin/).
+### Running it in the background
 
-**Other handhelds / Arch-based distros (CachyOS, Bazzite-likes):** if
-your distro is *not* immutable (CachyOS isn't), the plain Linux tarball
-with your distro's `webkit2gtk-4.1` package is the best install — it
-survives updates and uses your native graphics stack. The Flatpak is
-for immutable systems like stock SteamOS.
+```bash
+mkdir -p ~/.config/systemd/user
+cp packaging/systemd/sidesave-daemon-native.service ~/.config/systemd/user/sidesave-daemon.service
+# edit ExecStart to point at your built sidesave-cli if it's not on PATH
+systemctl --user daemon-reload
+systemctl --user enable --now sidesave-daemon
+```
 
-**Troubleshooting:**
-- *"runtime org.gnome.Platform … not found"* during install — your
-  flatpak user installation doesn't have Flathub configured yet:
-  `flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo`
-  then install the bundle again.
-- The app must be launched in **Desktop Mode** (or added to Steam to run
-  from Game Mode) — running it from a bare terminal session shows no
-  window.
+On a Steam Deck, also run `sudo loginctl enable-linger $USER` — without it,
+SteamOS stops user background processes once the session that started them
+ends, which is exactly what you don't want for a sync daemon.
 
-> **Upgrading from the original (JS) SideSave?** Your data migrates automatically on first launch — tracked games, snapshots, pairings, and cloud settings are imported from `~/.sidesave/sidesave-db.json` (kept as a backup, never deleted). Go and JS devices can pair and sync with each other during the transition.
+### Steam Deck: Flatpak + Decky plugin
 
-## Quick start
+The Flatpak is the practical route on stock SteamOS (no WebKitGTK otherwise).
+Build the bundle from `packaging/flatpak/io.github.bytethecookie.SideSave.yml`
+with `flatpak-builder` (stage the built `sidesave` and `sidesave-cli`
+binaries plus the desktop/icon/metainfo files first), then:
 
-1. **Launch SideSave** on your first device. It scans for installed games and shows detected saves as cover-art tiles.
-2. **Track a game** — click a detected tile, or add any folder / save file manually.
-3. **Pair a second device.** On the same network, the other device appears automatically under **Devices** — approve the request. Remote? One device creates a **room code** under **Internet Sync**; the other joins with it.
-4. **Play.** When a save changes, SideSave snapshots it and syncs it to every paired device. There's nothing else to do.
+```bash
+flatpak install --user sidesave.flatpak
+```
 
-Need to undo something? Open a game's **history** and roll back a snapshot — the whole save or a single file.
+For a Game Mode panel, build [`sidesave-decky-plugin/`](sidesave-decky-plugin/)
+(`npm install && npm run build`) and copy `plugin.json`, `package.json`,
+`main.py`, and `dist/index.js` into `~/homebrew/plugins/SideSave/` on the
+Deck, then `sudo systemctl restart plugin_loader`. It can start the daemon
+itself from the panel if it isn't already running as a service.
+
+Use `packaging/systemd/sidesave-daemon.service` instead of the `-native` one
+for a Flatpak install — its `ExecStart` goes through `flatpak run`.
 
 ## How it works
 
@@ -160,233 +151,36 @@ Need to undo something? Open a game's **history** and roll back a snapshot — t
                    └───────────┘
 ```
 
-1. **Watch** — a filesystem watcher notices a save was written (safe-write and file-lock aware, so it never grabs a half-flushed file).
-2. **Delta** — the save is chunked into content-defined blocks and SHA-256 hashed. A manifest diff finds exactly which blocks changed.
-3. **Snapshot** — the new state is recorded as an immutable, versioned snapshot on a branch.
-4. **Sync** — only the changed blocks travel to paired peers, over LAN when possible or through a stateless relay room otherwise. Lineage metadata lets the receiver detect a genuine conflict versus a fast-forward.
+1. **Identify** — a Proton compatdata prefix is only offered if its AppID
+   resolves to a name in `shortcuts.vdf`; real Steam games (matched via
+   `appmanifest_*.acf`) are excluded, not just deprioritized.
+2. **Watch** — a filesystem watcher notices `Saved/SaveGames` changed (safe-
+   write and file-lock aware).
+3. **Delta** — the save is chunked into content-defined blocks and SHA-256
+   hashed; only changed blocks are ever transferred.
+4. **Snapshot & sync** — the new state becomes an immutable, versioned
+   snapshot, then syncs to paired peers over LAN or through a relay room.
+   Sync lineage tells a receiver a genuine conflict from a fast-forward.
 
 ## Command line
 
-`sidesave` is a complete client, not a companion to the app: auto-detect saves,
-pair devices, sync, resolve conflicts, manage snapshots and branches, back up
-to the cloud, and run as a background service. A headless box — a NAS, a home
-server, or a Steam Deck that lives in Game Mode — never needs the desktop app.
-
-No account, no token, no server to sign up to.
-
-<p align="center">
-  <img src="docs/screenshots/cli-status.png" width="820"
-       alt="The SideSave CLI status panel: the SideSave wordmark in white and purple, then the version, whether the daemon is running, the device name, tracked games, paired devices and relay status, followed by suggested next commands.">
-</p>
-
-Run `sidesave` on its own and it tells you what is happening right now, and what
-to do next. There is a fuller walkthrough on the
-[website](https://open-save.vercel.app/cli.html).
-
-### Install
-
-**Linux & Steam Deck**
+`sidesave-cli` is a complete client — scan, add, pair, sync, resolve
+conflicts, manage snapshots and branches, run as a background service. Run it
+with no arguments for a status panel and suggested next commands.
 
 ```bash
-curl -fsSL https://sidesave.org/install.sh | sh
+sidesave-cli scan                       # non-Steam shortcut saves on this machine
+sidesave-cli add <number>               # track one from the scan results
+sidesave-cli daemon start                # foreground; use the systemd service for real use
+sidesave-cli pair 192.168.1.42          # pair another device on the LAN
+sidesave-cli sync --all
+sidesave-cli conflicts                  # anything waiting on a decision
+sidesave-cli resolve <gameId> keep-both|keep-local|keep-remote
+sidesave-cli game <gameId> set path <newPath>   # relink after an install moves
 ```
 
-**Windows** (PowerShell)
-
-```powershell
-irm https://sidesave.org/install.ps1 | iex
-```
-
-Installs to your user folder — no root, no admin — puts it on your `PATH`, and
-shows the status panel when it is done. Downloads are verified against the
-`SHA256SUMS` published with each release; piping a script into a shell is enough
-trust on its own.
-
-Three names, one program: **`sidesave`**, **`os`** as a short alias, and
-`sidesave-cli` (the name the Steam Deck plugin and the Linux packages use
-internally). If something on your system already answers to `os`, the installer
-leaves it alone and says so.
-
-To choose where it lands or pin a version:
-
-```bash
-OPENSAVE_INSTALL_DIR=/usr/local/bin OPENSAVE_VERSION=v2.2.0 sh install.sh
-```
-
-Or build it: `go build -o sidesave ./cmd/sidesave-cli`
-
-### Keeping it current
-
-```bash
-sidesave update            # replace this binary with the latest release
-sidesave update --check    # just report whether a newer one exists
-```
-
-Pre-releases are never offered automatically — install those yourself from the
-releases page.
-
-### Getting started
-
-```bash
-sidesave scan                          # what is on this machine
-sidesave add "Elden Ring" ~/.local/share/EldenRing
-sidesave daemon start &                # the sync service
-sidesave pair 192.168.1.42             # pair another device on the LAN
-sidesave sync --all
-```
-
-Different networks instead of a LAN? Run `sidesave relay join <code>` with the
-same made-up code on both devices — no port forwarding, and the relay only
-passes encrypted data through without storing it.
-
-### Run it permanently
-
-```bash
-sidesave service install
-systemctl --user enable --now sidesave-daemon
-sudo loginctl enable-linger $USER     # Steam Deck: survive Game Mode switches
-```
-
-That last line matters on a Deck. Without it SteamOS stops your background
-services the moment you switch to Game Mode — which is exactly when you want
-syncing to be happening.
-
-### Command reference
-
-Every command accepts `--json` for scripting.
-
-**Games**
-
-| Command | What it does |
-| --- | --- |
-| `scan` | Auto-detect saves: Steam libraries, Proton and Wine prefixes, emulators, 20k+ titles via the Ludusavi manifest |
-| `add <name> <path>` | Track a save folder or file |
-| `remove <gameId>` | Stop tracking. Save files and snapshots stay on disk |
-| `untrack-all --yes` | Stop tracking everything (snapshots are kept) |
-| `game <gameId> set <key> <value>` | Per-game settings: `path`, `app-id`, `exe-path`, `cover-url`, `auto-sync`, `max-snapshots` |
-| `launch <gameId>` | Start the game |
-| `status` | Tracked games, branches, peers |
-
-**Sync & devices**
-
-| Command | What it does |
-| --- | --- |
-| `sync [<gameId>\|--all]` | Sync now; everything by default |
-| `peers` | Paired devices, devices found on this network, pending requests |
-| `pair <host[:port]>` | Ask a device on the LAN to pair |
-| `pair requests` | Show incoming requests, and which device sent them |
-| `pair approve\|reject <peerId>` | Answer one |
-| `unpair <peerId>` | Drop a paired device |
-| `probe <host[:port]>` | Check whether a device answers — works before pairing |
-| `forget <peerId>` | Remove a stale device record |
-| `relay join <code>` | Sync across networks — same code on each device |
-| `relay status\|leave` | Show or leave the relay room |
-| `conflicts` | Saves that diverged and are waiting on a decision |
-| `resolve <gameId> <choice>` | `keep-both` (safest), `keep-local`, `keep-remote` |
-
-**History**
-
-| Command | What it does |
-| --- | --- |
-| `snapshot <gameId> [comment]` | Snapshot the current save |
-| `snapshots <gameId>` | List snapshots, newest first |
-| `rollback <gameId> <snapId>` | Restore a snapshot |
-| `branch <gameId> <name>` | Create a branch for a parallel playthrough |
-| `checkout <gameId> <name>` | Switch branch |
-| `branch-delete <gameId> <name>` | Delete a branch and its snapshots |
-| `snapshot-delete <gameId> <snapId>` | Delete one snapshot |
-| `prune [--apply-default]` | Apply snapshot retention limits now |
-| `files <gameId> <snapId> [path]` | List a snapshot's contents, or restore a single file from it |
-| `export <gameId> <dir>` | Copy the save out exactly as the game wrote it — no archive, no wrapper |
-| `backup export\|import <file.sscb>` | Portable backup archive |
-
-**Cloud backup**
-
-| Command | What it does |
-| --- | --- |
-| `cloud status` | Provider and connection state |
-| `cloud browse` | Everything stored in the cloud |
-| `cloud list <gameId>` | Cloud snapshots for one game |
-| `cloud push <gameId>` | Upload local snapshots |
-| `cloud restore <gameId> <file>` | Pull one back |
-| `cloud delete <gameId> --yes` | Remove a game's cloud copies |
-
-Google Drive, Dropbox and OneDrive need a browser to grant consent, so those are
-connected once in the desktop app. WebDAV, webhook and local/NAS providers work
-entirely from the terminal.
-
-**Configuration**
-
-| Command | What it does |
-| --- | --- |
-| `config [list]` | Show settings |
-| `config set <key> <value>` | `device-name`, `match-by-app-id`, `snapshot-limit`, `relay-url` |
-| `scanpath list\|add\|remove <path>` | Extra folders for auto-scan to check |
-| `exclude list\|add\|remove <path>` | Folders auto-scan should skip |
-| `link <gameId> <otherId>` | Treat two tracked games as the same game |
-| `unlink <aliasId>` / `links <gameId>` | Undo a link / show linked ids |
-
-**Service**
-
-| Command | What it does |
-| --- | --- |
-| `daemon start [--port N]` | Run the daemon in the foreground |
-| `daemon status` / `daemon stop` | Check on, or stop, a daemon started by the CLI |
-| `service install\|uninstall\|status` | Manage the `systemd --user` unit (Linux) |
-| `completion bash\|zsh\|fish` | Shell completion script |
-| `upnp <port> [--delete]` | Forward a router port via UPnP |
-| `update [--check]` | Update this binary from the latest release |
-| `version` | Print the version |
-
-### Scripting
-
-```bash
-sidesave daemon status --json | jq .gameCount
-sidesave snapshots elden-ring --json | jq -r '.[0].id'
-sidesave conflicts --json | jq 'keys'
-```
-
-Failures exit non-zero and, with `--json`, print `{"error": "..."}`.
-
-Full details: `man sidesave` (shipped in the Linux tarball), or
-[`packaging/man/sidesave.1`](packaging/man/sidesave.1).
-
-The daemon exposes a local REST + WebSocket API (P2P on port `8383`) that the
-desktop UI, the CLI and the Steam Deck plugin all drive, so anything the app
-can do is scriptable.
-
-## Build from source
-
-```bash
-# Desktop app (needs Go 1.26+, Node 18+, and the Wails CLI)
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
-cd cmd/sidesave-app && wails build
-
-# Headless daemon + CLI
-go build ./cmd/sidesave-cli
-
-# Relay server (self-host)
-go build ./cmd/sidesave-relay
-```
-
-Run the test suite:
-
-```bash
-go test ./...          # unit tests
-go test ./e2e/...      # end-to-end pairing & sync tests
-```
-
-## Self-hosting the relay
-
-The relay is stateless — it brokers room codes and proxies OAuth, and writes no save to disk. What it forwards is encrypted in transit, but that encryption ends at the relay rather than at your other device, so a relay operator could read what passes through. Ours is `wss://relay.sidesave.org`; run your own so that nobody but you is on the path:
-
-```bash
-./sidesave-relay                     # listens on :8386
-PORT=10000 ./sidesave-relay          # custom port
-docker build -f relay/Dockerfile .   # or as a container
-```
-
-Point **Settings → Internet Sync → Relay server** at your instance. `sidesave upnp 8386` forwards the port on UPnP-capable routers.
+Every command accepts `--json` for scripting. Full command reference:
+`sidesave-cli --help`, or `packaging/man/sidesave.1`.
 
 ## Architecture
 
@@ -401,55 +195,32 @@ internal/
   watcher              Save-change detection (safe-write aware, lock guard)
   p2p                  Discovery, pairing, sync engine, LAN/WAN transports
   cloud                Backup providers + PKCE OAuth
-  presets              Game / emulator / store save-location detection
+  presets              Non-Steam shortcut detection (shortcuts.vdf, compatdata)
   api                  Local REST + WebSocket dashboard API
   daemon               Long-running service orchestration
   sysintegration       Tray, notifications, autostart
 sidesave-decky-plugin  Steam Deck Game Mode plugin (Decky Loader)
 ```
 
-The daemon speaks the same REST/WebSocket API and P2P wire protocol as the original JS app, so old and new versions interoperate during a rollout.
+## Data
 
-## Data & privacy
-
-Everything lives under `~/.sidesave/`:
+Everything lives under `~/.sidesave/` (migrated automatically from
+`~/.opensave` on first run of this fork, and from `~/.savesync` before that):
 
 | Path | What |
 |---|---|
 | `sidesave.db` | SQLite store — tracked games, snapshots, pairings, settings |
-| `snapshots/` | Versioned save snapshots |
-| `sidesave.log` | Activity log for diagnostics |
-| `sidesave-db.json` | Legacy JS database (kept as an import backup) |
+| `backups/` | Versioned save snapshots |
+| `covers/` | Cached cover art |
+| `sidesave.log` | Activity log |
 
-No accounts, no telemetry, no analytics. See [PRIVACY.md](PRIVACY.md) for the full statement.
+No accounts, no telemetry. See [PRIVACY.md](PRIVACY.md), inherited from
+upstream and still accurate.
 
-## FAQ
+## Credit
 
-**Do I need a server or an account?**
-No. Devices sync directly. The optional relay only matters for syncing across the internet, and you can self-host it.
-
-**Is my data encrypted in transit?**
-Yes, to the relay — the connection is TLS, and the relay writes no save to disk. But that encryption ends at the relay rather than at your other device, so saves are not sealed end-to-end yet and a relay operator could read what passes through. LAN sync is direct and involves no relay; self-hosting the relay puts the whole WAN path under your control too.
-
-**What if two devices change the same save while offline?**
-SideSave detects the divergence by sync lineage and asks you to keep yours, theirs, or both (on a new branch). It never silently overwrites.
-
-**Does it work with non-Steam or emulated games?**
-Yes. If it writes a save to disk, SideSave can track it — Steam, emulators, GOG, Epic, and repacks are auto-detected; anything else you can add by path.
-
-**Can old (JS) and new (Go) versions talk to each other?**
-Yes, during the transition. They share the same wire protocol and your data migrates automatically.
-
-## Contributing
-
-Issues and pull requests are welcome. Please run `go test ./...` before opening a PR, and keep changes focused. For larger features, open an issue first so we can align on approach.
-
-## Documentation
-
-- [User Guide](USER_GUIDE.md) — first run, syncing, snapshots, cloud backup, troubleshooting
-- [Changelog](CHANGELOG.md) — release notes
-- [Privacy](PRIVACY.md) — what SideSave does and doesn't do with your data
-
-## License
-
-[MIT](LICENSE) — retains the original author's copyright and credits the Go rewrite.
+This is a fork of [Liquid-co/OpenSave](https://github.com/Liquid-co/OpenSave)
+— all of the actual sync engine (delta hashing, P2P transport, snapshot/branch
+history, conflict resolution) is their work, unmodified. This fork only
+changed what gets detected and shown. [MIT licensed](LICENSE), retaining the
+original author's copyright.
