@@ -31,3 +31,8 @@ Thumbs.db
 # produces conflicts between machines.
 cmd/opensave-app/frontend/wailsjs/
 cmd/opensave-app/build/windows/installer/
+
+# Local flatpak-builder scratch output (build-dir/ and .flatpak-builder/
+# are excluded already, likely by a global excludesFile — these two aren't).
+packaging/flatpak/repo/
+packaging/flatpak/stage/
