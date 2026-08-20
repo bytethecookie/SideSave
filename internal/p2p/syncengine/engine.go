@@ -294,6 +294,19 @@ func (e *Engine) SyncWithPeer(ctx context.Context, gameID string, peer Peer) (Re
 	}
 	decision := Compute(localManifest, remoteData.Manifest, lineageFiles, lineageDirs)
 
+	// A decision that would delete a large share of a previously-synced save
+	// in one pass is far more likely to be a reset/fresh save state on one
+	// side than a deliberate deletion — see IsMassDeletion. Raise it as a
+	// conflict instead of applying it silently: the existing conflict UI
+	// already lets the user pick a side, which is exactly the call this
+	// needs and the sync engine cannot make on its own.
+	if decision.IsMassDeletion(len(lineageFiles)) {
+		e.Log("warn", fmt.Sprintf("sync for %q with %q would delete %d of %d previously-synced files locally at once — raising a conflict instead of applying it",
+			game.Name, peer.Name, len(decision.FilesToDeleteLocally), len(lineageFiles)))
+		e.registerConflict(gameID, peer, localManifest, remoteData)
+		return Result{Status: "conflict", PeerID: peer.ID, PeerName: peer.Name}, nil
+	}
+
 	if !decision.HasChanges() {
 		e.Log("success", fmt.Sprintf("%q already in sync with %q", game.Name, peer.Name))
 		e.persistLineage(gameID, peer.ID, localManifest, remoteData.Manifest)

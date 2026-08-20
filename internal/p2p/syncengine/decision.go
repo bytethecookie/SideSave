@@ -100,6 +100,44 @@ func (d Decision) HasDeletions() bool {
 		len(d.DirsToDeleteOnPeer) > 0 || len(d.DirsToDeleteLocally) > 0
 }
 
+// massDeletionMinFiles and massDeletionFraction bound IsMassDeletion. The
+// floor keeps ordinary deletes (a user clears a couple of old save slots)
+// silent; the fraction is what actually catches a reset save.
+const (
+	massDeletionMinFiles = 3
+	massDeletionFraction = 0.5
+)
+
+// IsMassDeletion reports whether applying this decision would wipe a large
+// share of a previously-synced save from THIS device at once — the
+// signature of a save that got reset rather than one the user actually
+// deleted from.
+//
+// Caught live: launching a tracked game on a device that had never run it
+// recreates only a handful of "session" files in a fresh Proton prefix. The
+// lineage-based delete logic in Compute has no way to tell that apart from
+// a real deletion — a file that was synced before and is now missing on the
+// peer reads as "the peer deleted it" — so it deleted this device's own
+// good copies to match, wiping the real save (31 files down to 4, on both
+// devices, before anyone noticed). Compute must stay pure lineage logic;
+// this is a blast-radius check on its OUTPUT, applied by the caller before
+// acting on it.
+//
+// Deliberately FilesToDeleteLocally only. FilesToDeleteOnPeer is the other
+// direction — this device already deleted those files itself, as a real,
+// already-happened local action, and is only telling the peer to catch up.
+// That is never suspicious no matter how many files it covers: a user
+// clearing an entire save folder in one go is ordinary, and second-guessing
+// it here would turn every legitimate bulk delete into an unwanted conflict
+// prompt.
+func (d Decision) IsMassDeletion(lineageFileCount int) bool {
+	deleted := len(d.FilesToDeleteLocally)
+	if deleted < massDeletionMinFiles || lineageFileCount == 0 {
+		return false
+	}
+	return float64(deleted) >= float64(lineageFileCount)*massDeletionFraction
+}
+
 // Compute classifies every file and directory across both manifests using
 // the per-peer lineage sets (paths present at the last successful sync).
 // The lineage is what distinguishes "new on remote" (pull it) from

@@ -298,3 +298,41 @@ func TestDetectConflict_ContentBased(t *testing.T) {
 		}
 	}
 }
+
+// TestDecision_IsMassDeletion pins the incident guard: a decision that would
+// delete a large share of a previously-synced save FROM THIS DEVICE must be
+// flagged, but an ordinary small deletion (the user actually cleared a
+// couple of old saves) must not — and neither must a bulk deletion the user
+// already made themselves and is only propagating outward (FilesToDeleteOnPeer),
+// no matter how large: that's a real, already-happened local action, not a
+// gap inferred from the peer's manifest.
+func TestDecision_IsMassDeletion(t *testing.T) {
+	cases := []struct {
+		name             string
+		deleteLocally    int
+		deleteOnPeer     int
+		lineageFileCount int
+		want             bool
+	}{
+		{"no lineage to compare against -> never flagged", 5, 0, 0, false},
+		{"below the absolute floor -> not flagged even at 100%", 2, 0, 2, false},
+		{"a real reset: 27 of 31 gone at once", 27, 0, 31, true},
+		{"a huge propagated deletion (already happened locally) is never flagged", 0, 30, 31, false},
+		{"deleteOnPeer never counts toward the total, even mixed with a small local delete", 2, 29, 31, false},
+		{"under half -> ordinary deletion, not flagged", 3, 0, 10, false},
+		{"exactly half -> flagged", 5, 0, 10, true},
+		{"just below the floor's neighbor, well under half -> not flagged", 3, 0, 100, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := Decision{
+				FilesToDeleteLocally: make([]string, tc.deleteLocally),
+				FilesToDeleteOnPeer:  make([]string, tc.deleteOnPeer),
+			}
+			if got := d.IsMassDeletion(tc.lineageFileCount); got != tc.want {
+				t.Errorf("IsMassDeletion(lineage=%d) with %d+%d deletions = %v, want %v",
+					tc.lineageFileCount, tc.deleteLocally, tc.deleteOnPeer, got, tc.want)
+			}
+		})
+	}
+}

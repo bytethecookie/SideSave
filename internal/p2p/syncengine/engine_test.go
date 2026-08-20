@@ -3,6 +3,7 @@ package syncengine
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -263,6 +264,63 @@ func TestSync_DeletionPropagation(t *testing.T) {
 	// The peer's deletion applied locally.
 	if _, err := os.Stat(filepath.Join(env.localDir, "b.dat")); !os.IsNotExist(err) {
 		t.Error("b.dat should have been deleted locally (peer deleted it)")
+	}
+}
+
+// TestSync_ResetSaveRaisesConflictInsteadOfWipingPeer reproduces the actual
+// incident: a game tracked and synced on both devices, then launched on a
+// device where its Proton prefix had to be created fresh. The game recreates
+// only a handful of "session" files immediately; everything else the real
+// save held (extra slots, level thumbnails) is — for now — simply absent,
+// not deleted. Compute cannot tell that apart from a real deletion, because
+// lineage only records "this path existed at the last successful sync": it
+// classified the gap as "the peer deleted these" and would have deleted this
+// device's own good copies to match. The guard must catch it and raise a
+// conflict instead, leaving both sides' files untouched.
+func TestSync_ResetSaveRaisesConflictInsteadOfWipingPeer(t *testing.T) {
+	env := setupEngine(t)
+
+	// Ten files, previously synced and identical on both sides.
+	var lineage []string
+	for i := 0; i < 10; i++ {
+		name := fmt.Sprintf("save-%d.dat", i)
+		write(t, env.localDir, name, "content")
+		write(t, env.remoteDir, name, "content")
+		lineage = append(lineage, name)
+	}
+	if err := env.store.SetSyncState("game1", env.peer.ID, lineage, nil); err != nil {
+		t.Fatal(err)
+	}
+	lastSync := time.Now().Add(-1 * time.Hour).UTC().Format("2006-01-02T15:04:05.000Z")
+	if err := env.store.UpdatePeerLastSynced(env.peer.ID, lastSync); err != nil {
+		t.Fatal(err)
+	}
+
+	// The remote peer's prefix got reset: only 2 of the 10 files exist there
+	// now (a fresh launch recreating the bare minimum), same as this device
+	// would see if it were the one that got wiped.
+	for i := 2; i < 10; i++ {
+		if err := os.Remove(filepath.Join(env.remoteDir, fmt.Sprintf("save-%d.dat", i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	res, err := env.engine.SyncWithPeer(context.Background(), "game1", env.peer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Status != "conflict" {
+		t.Fatalf("result = %+v, want conflict", res)
+	}
+
+	// Nothing was deleted anywhere — the whole point of the guard.
+	for i := 0; i < 10; i++ {
+		if _, err := os.Stat(filepath.Join(env.localDir, fmt.Sprintf("save-%d.dat", i))); err != nil {
+			t.Errorf("local save-%d.dat must survive a raised conflict, got: %v", i, err)
+		}
+	}
+	if len(env.transport.deletedOnPeer) != 0 {
+		t.Errorf("nothing should have been propagated for deletion, got %v", env.transport.deletedOnPeer)
 	}
 }
 

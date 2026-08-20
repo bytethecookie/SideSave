@@ -36,3 +36,5 @@ cmd/sidesave-app/build/windows/installer/
 # are excluded already, likely by a global excludesFile — these two aren't).
 packaging/flatpak/repo/
 packaging/flatpak/stage/
+packaging/flatpak/flatpak-repo/
+packaging/flatpak/SideSave.flatpak
