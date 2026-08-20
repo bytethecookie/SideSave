@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="cmd/sidesave-app/build/appicon.png" alt="SideSave" width="120" />
-
 # SideSave
 
 ### Save sync for the games Steam Cloud doesn't cover.
@@ -72,6 +70,20 @@ SideSave is what's left after cutting everything down to that one case.
   device later finds the same game installed for real, SideSave now points
   you at relinking the existing entry instead of quietly tracking a second,
   disconnected copy.
+- **Won't silently delete a synced save.** A sync that would delete a large
+  share of a save's previously-known files at once now raises a conflict
+  instead of applying automatically. Caught live: launching a tracked game on
+  a device that had never run it recreates only a handful of "session" files
+  in a fresh Proton prefix — the rest simply isn't there yet, not deleted —
+  and the lineage-based delete logic used to read that gap as a deliberate
+  peer deletion and act on it. The two-sided decision (keep local, keep
+  remote) now always goes through you instead.
+- **Treats identical paths as identical, even through a symlink.** Steam's
+  own `~/.steam/steam -> ~/.local/share/Steam` convention (and equivalents
+  elsewhere) means two different-looking paths can be the exact same files on
+  disk. Scanning and duplicate-tracking checks now resolve symlinks before
+  comparing, so a scan result reached through the symlink can't create a
+  second, disconnected copy of an already-tracked save.
 - **Renamed throughout** — module path, binaries, Flatpak app ID, Decky
   plugin, data directory. A migration handles `~/.opensave` → `~/.sidesave`
   automatically on first run.
