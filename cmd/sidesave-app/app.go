@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -50,6 +51,23 @@ func (a *App) startup(ctx context.Context) {
 	d, err := daemon.New(daemon.Options{})
 	if err != nil {
 		a.bootErr = err.Error()
+		return
+	}
+
+	// Refuse to start a second daemon against the same data dir. The CLI's
+	// `daemon start` already learned this the hard way (see its own
+	// daemonRunning check in internal/cliapp): two independent daemons —
+	// each with their own watcher and P2P sync loop — racing against the
+	// same SQLite DB and save files don't just duplicate work, they fight
+	// each other, each mistaking the other's writes for local changes and
+	// raising sync conflicts in a loop. This mirrors that same check, which
+	// the desktop app never had — caught live: the app open alongside the
+	// systemd daemon.service produced exactly that loop on aibox.
+	if addr := runningDaemonAddr(d.Paths.HomeDir); addr != "" {
+		a.bootErr = "a SideSave daemon is already running at " + addr +
+			" (background service, or another window) — close it first, or use that one instead of opening a second copy of the app"
+		d.Log.Log("error", a.bootErr)
+		d.Stop()
 		return
 	}
 	a.daemon = d
@@ -118,6 +136,31 @@ func (a *App) startup(ctx context.Context) {
 	d.Log.Log("info", "desktop app connected to daemon at "+addr)
 
 	a.startTray()
+}
+
+// runningDaemonAddr reports the address of an already-running daemon for
+// this data dir, "" if none answers. Mirrors internal/cliapp's
+// daemonRunning/daemonBaseURL: a network reachability check, not a PID
+// file — inside a Flatpak sandbox every `flatpak run` gets its own fresh
+// PID namespace, so a stale pidfile from an earlier run would read back as
+// "alive" forever.
+func runningDaemonAddr(homeDir string) string {
+	addr := "127.0.0.1:8383"
+	if raw, err := os.ReadFile(filepath.Join(homeDir, "daemon.addr")); err == nil {
+		if a := strings.TrimSpace(string(raw)); a != "" {
+			addr = a
+		}
+	}
+	quick := &http.Client{Timeout: 2 * time.Second}
+	resp, err := quick.Get("http://" + addr + "/api/status")
+	if err != nil {
+		return ""
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	return addr
 }
 
 // onSecondInstanceLaunch fires when SideSave is launched again while it is
