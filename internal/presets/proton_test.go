@@ -181,3 +181,111 @@ func TestScan_UnrealSavedFolderOffersOnlySaveGames(t *testing.T) {
 		t.Error("the engine-wide AppData/Local/UnrealEngine folder must never be offered — it's not per-game save data")
 	}
 }
+
+// TestScan_RuneConventionUnderPublicIsOffered pins support for RUNE-tagged
+// cracked builds, which mirror Steam Cloud saves to the Windows Public
+// profile (Documents/Steam/RUNE/<id>/remote/) instead of the account's own
+// profile. prefixUserDirs deliberately never scans Public — it's normally
+// just OS junk (Videos, Pictures, Desktop, ...) — so this convention needs
+// its own explicit lookup, or a game whose only save copy lives there (no
+// steamuser folder at all) is never offered.
+func TestScan_RuneConventionUnderPublicIsOffered(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	home := t.TempDir()
+	lib := filepath.Join(home, ".local", "share", "Steam")
+
+	prefix := filepath.Join(lib, "steamapps", "compatdata", "2648656313", "pfx", "drive_c", "users")
+
+	// The only real save data — under Public, must still be offered.
+	mustMkFile(t, filepath.Join(prefix, "Public", "Documents", "Steam", "RUNE", "3768760", "remote", "kntslotsavefile-0", "data.save"))
+	// Sibling Steamworks-emulator bookkeeping next to remote/ — not part of
+	// the offered path, must not leak in.
+	mustMkFile(t, filepath.Join(prefix, "Public", "Documents", "Steam", "RUNE", "3768760", "achievements.ini"))
+	// Generic Public junk elsewhere in the profile — must never be offered.
+	mustMkFile(t, filepath.Join(prefix, "Public", "Videos", "dummy.txt"))
+	// steamuser exists but is untouched by this game (Temp/Microsoft only,
+	// as Wine creates by default) — no real per-user save data at all.
+	mustMkFile(t, filepath.Join(prefix, "steamuser", "AppData", "Local", "Temp", "dummy.txt"))
+
+	raw := fakeShortcutsVDF(t, map[string]struct {
+		appID int32
+		name  string
+	}{"0": {appID: -1646310983, name: "007 first light"}}) // -1646310983 as int32 is 2648656313 unsigned
+	userdata := filepath.Join(lib, "userdata")
+	mkfile(t, filepath.Join(userdata, "190002642", "config", "shortcuts.vdf"), string(raw))
+
+	sc := &Scanner{GOOS: "linux", HomeDir: home, SteamRoots: []string{lib}}
+	got := sc.Scan(nil)
+
+	var runeFound, iniLeak, publicJunkLeak bool
+	for _, d := range got {
+		switch {
+		case strings.Contains(d.SavePath, filepath.Join("RUNE", "3768760", "remote")):
+			runeFound = true
+			if d.Name != "007 first light (RUNE)" {
+				t.Errorf("RUNE entry Name = %q, want %q", d.Name, "007 first light (RUNE)")
+			}
+		case strings.Contains(d.SavePath, "achievements.ini"):
+			iniLeak = true
+		case strings.Contains(d.SavePath, "Videos"):
+			publicJunkLeak = true
+		}
+	}
+	if !runeFound {
+		t.Error("Documents/Steam/RUNE/<id>/remote under Public must be offered — it's the game's only save data")
+	}
+	if iniLeak {
+		t.Error("the RUNE id folder's own bookkeeping files (achievements.ini etc.) must not be offered")
+	}
+	if publicJunkLeak {
+		t.Error("generic Public junk outside the RUNE convention must never be offered")
+	}
+}
+
+// TestScan_SettingsOnlyFolderNotOffered pins the fix for a folder that
+// looks exactly like a second save location but holds nothing but local
+// device settings. Some engines drop a lone "<Game>Config.cfg/.local" pair
+// directly under what would otherwise pass every other check (non-empty,
+// not vendor junk, not already seen) — offering it repeatedly nominated a
+// device-settings folder as if it were a new, untracked game.
+func TestScan_SettingsOnlyFolderNotOffered(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	home := t.TempDir()
+	lib := filepath.Join(home, ".local", "share", "Steam")
+
+	prefix := filepath.Join(lib, "steamapps", "compatdata", "2631293769", "pfx", "drive_c", "users", "steamuser")
+
+	// A folder that holds only device settings — must NOT be offered.
+	mustMkFile(t, filepath.Join(prefix, "Saved Games", "MachineGames", "TheGreatCircle", "base", "TheGreatCircleConfig.cfg"))
+	mustMkFile(t, filepath.Join(prefix, "Saved Games", "MachineGames", "TheGreatCircle", "base", "TheGreatCircleConfig.local"))
+	// A real save folder elsewhere for the same game — must still be offered.
+	mustMkFile(t, filepath.Join(prefix, "AppData", "Local", "TheGreatCircle", "profile.bin"))
+
+	raw := fakeShortcutsVDF(t, map[string]struct {
+		appID int32
+		name  string
+	}{"0": {appID: -1663673527, name: "Indiana Jones and the Great Circle"}}) // -1663673527 as int32 is 2631293769 unsigned
+	userdata := filepath.Join(lib, "userdata")
+	mkfile(t, filepath.Join(userdata, "190002642", "config", "shortcuts.vdf"), string(raw))
+
+	sc := &Scanner{GOOS: "linux", HomeDir: home, SteamRoots: []string{lib}}
+	got := sc.Scan(nil)
+
+	var settingsLeak, realSaveFound bool
+	for _, d := range got {
+		switch {
+		case strings.Contains(d.SavePath, "MachineGames"):
+			settingsLeak = true
+		case strings.Contains(d.SavePath, filepath.Join("Local", "TheGreatCircle")):
+			realSaveFound = true
+		}
+	}
+	if settingsLeak {
+		t.Error("a folder holding only device-settings files (Config.cfg/.local) must never be offered as a save location")
+	}
+	if !realSaveFound {
+		t.Error("a real save folder for the same game must still be offered — the settings-only check must not be overbroad")
+	}
+}

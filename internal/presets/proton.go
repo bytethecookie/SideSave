@@ -2,8 +2,10 @@ package presets
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -57,6 +59,46 @@ var nonSaveUnrealSubdirs = map[string]bool{
 	"screenshots": true,
 }
 
+// runeSaveRoot is the save convention used by RUNE-tagged cracked builds
+// (a common Goldberg-style Steamworks emulator lineage): rather than
+// writing to the account's own Windows profile, they mirror Steam Cloud
+// files under the Public profile at Documents/Steam/RUNE/<id>/remote/.
+// It's the only thing under Public worth scanning — the rest of that
+// profile is generic OS junk (Videos, Pictures, Desktop, ...) shared by
+// every prefix, which is why prefixUserDirs excludes Public outright
+// rather than scanning it like a real per-user home.
+var runeSaveRoot = filepath.Join("Documents", "Steam", "RUNE")
+
+// settingsOnlyNameRe flags filenames that are local device settings —
+// graphics/window/key-binding config — never save progress. Some engines
+// drop a lone "<Game>Config.cfg"/".local" pair directly in what otherwise
+// looks like a per-game save folder (e.g. Saved Games/<Studio>/<Game>/base
+// with nothing else in it), which would otherwise be offered as if it
+// were a second, legitimate save location.
+var settingsOnlyNameRe = regexp.MustCompile(`(?i)(config|settings|keybind)`)
+
+// looksLikeSettingsOnly reports whether every file under dir (recursively)
+// has a name matching settingsOnlyNameRe — i.e. the folder holds nothing
+// but local device settings, no actual save data. An empty dir (already
+// filtered by dirNonEmpty before this runs) or a walk error reports false
+// rather than risk hiding a real save.
+func looksLikeSettingsOnly(dir string) bool {
+	sawFile := false
+	allSettings := true
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		sawFile = true
+		if !settingsOnlyNameRe.MatchString(d.Name()) {
+			allSettings = false
+			return filepath.SkipAll
+		}
+		return nil
+	})
+	return err == nil && sawFile && allSettings
+}
+
 // scanProtonCompat walks every Steam library's compatdata prefixes and
 // offers the save locations of non-Steam shortcuts specifically:
 // realSteamAppIDs excludes real Steam-Cloud games (already synced by
@@ -81,23 +123,17 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, sh
 			if gameName == "" {
 				continue
 			}
-			// Steam's own prefixes use "steamuser", but a prefix created by
-			// another tool and later added to Steam can carry the real
-			// account name — take whichever users exist.
-			userHomes := prefixUserDirs(filepath.Join(compat, appID, "pfx"))
-			if len(userHomes) == 0 {
-				continue
-			}
-			steamUser := userHomes[0]
-
 			perGame := 0
 			// offer records one save candidate under the given label (the
 			// name shown after the game — e.g. "SB" or "GSE Saves", always
 			// the top-level folder name a user would recognize, even when
-			// savePath itself points deeper inside it).
+			// savePath itself points deeper inside it). looksLikeSettingsOnly
+			// rejects a folder holding nothing but local device settings —
+			// some engines drop those alone in a folder that otherwise looks
+			// exactly like a second save location.
 			offer := func(id, label, savePath string) bool {
 				abs, err := filepath.Abs(savePath)
-				if err != nil || seen[abs] || !dirNonEmpty(abs) || seenInside(seen, abs) {
+				if err != nil || seen[abs] || !dirNonEmpty(abs) || seenInside(seen, abs) || looksLikeSettingsOnly(abs) {
 					return false
 				}
 				seen[abs] = true
@@ -112,6 +148,27 @@ func (sc *Scanner) scanProtonCompat(libraries []string, seen map[string]bool, sh
 				perGame++
 				return true
 			}
+
+			// RUNE-convention saves live under the Public profile, which
+			// prefixUserDirs below deliberately never scans — check for
+			// them independently of whether a real per-user home exists.
+			publicRuneDir := filepath.Join(compat, appID, "pfx", "drive_c", "users", "Public", runeSaveRoot)
+			for _, sub := range listSubdirs(publicRuneDir) {
+				remotePath := filepath.Join(publicRuneDir, sub, "remote")
+				if info, err := os.Stat(remotePath); err == nil && info.IsDir() {
+					id := "proton-" + appID + "-rune-" + sanitizeID(sub)
+					offer(id, "RUNE", remotePath)
+				}
+			}
+
+			// Steam's own prefixes use "steamuser", but a prefix created by
+			// another tool and later added to Steam can carry the real
+			// account name — take whichever users exist.
+			userHomes := prefixUserDirs(filepath.Join(compat, appID, "pfx"))
+			if len(userHomes) == 0 {
+				continue
+			}
+			steamUser := userHomes[0]
 
 			for _, root := range protonSaveRoots {
 				rootPath := filepath.Join(steamUser, root)
